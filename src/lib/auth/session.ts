@@ -1,0 +1,106 @@
+/**
+ * Server-side session helpers.
+ * Identity comes from Firebase ID token (Authorization: Bearer <token>).
+ * Roles are ALWAYS read from the internal database – never from client claims.
+ */
+
+import { verifyIdToken } from "./firebase-admin";
+import { prisma, isDatabaseConfigured } from "@/lib/db";
+import type { Role } from "@prisma/client";
+
+export type SessionUser = {
+  id: string;
+  firebaseUid: string;
+  email: string;
+  displayName: string | null;
+  roles: Role[];
+};
+
+/**
+ * Resolve the current user from a Bearer token.
+ * Returns null if unauthenticated or token invalid.
+ * Creates the internal User row on first login (customer role by default).
+ */
+export async function getSessionUser(
+  authorizationHeader: string | null
+): Promise<SessionUser | null> {
+  if (!authorizationHeader?.startsWith("Bearer ")) {
+    return null;
+  }
+
+  const idToken = authorizationHeader.slice(7).trim();
+  if (!idToken) return null;
+
+  const decoded = await verifyIdToken(idToken);
+  if (!decoded?.uid || !decoded.email) return null;
+
+  if (!isDatabaseConfigured() || !prisma) {
+    // Database not ready – return a minimal ephemeral session (dev only)
+    return {
+      id: "ephemeral",
+      firebaseUid: decoded.uid,
+      email: decoded.email,
+      displayName: decoded.name ?? null,
+      roles: ["CUSTOMER"],
+    };
+  }
+
+  // Upsert internal user – idempotent
+  const user = await prisma.user.upsert({
+    where: { firebaseUid: decoded.uid },
+    update: {
+      email: decoded.email,
+      displayName: decoded.name ?? undefined,
+      photoUrl: decoded.picture ?? undefined,
+    },
+    create: {
+      firebaseUid: decoded.uid,
+      email: decoded.email,
+      displayName: decoded.name ?? null,
+      photoUrl: decoded.picture ?? null,
+      roles: ["CUSTOMER"],
+    },
+    select: {
+      id: true,
+      firebaseUid: true,
+      email: true,
+      displayName: true,
+      roles: true,
+    },
+  });
+
+  return user;
+}
+
+/** Require an authenticated user or throw a structured error */
+export async function requireUser(
+  authorizationHeader: string | null
+): Promise<SessionUser> {
+  const user = await getSessionUser(authorizationHeader);
+  if (!user) {
+    const err = new Error("Unauthorized");
+    (err as Error & { status: number }).status = 401;
+    throw err;
+  }
+  return user;
+}
+
+/** Require at least one of the given roles */
+export async function requireRole(
+  authorizationHeader: string | null,
+  allowed: Role[]
+): Promise<SessionUser> {
+  const user = await requireUser(authorizationHeader);
+  const hasRole = user.roles.some((r) => allowed.includes(r));
+  if (!hasRole) {
+    const err = new Error("Forbidden");
+    (err as Error & { status: number }).status = 403;
+    throw err;
+  }
+  return user;
+}
+
+/** Client cannot elevate roles – this is the only place roles are read */
+export function hasRole(user: SessionUser, role: Role): boolean {
+  return user.roles.includes(role);
+}

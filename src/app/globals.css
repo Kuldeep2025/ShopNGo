@@ -1,0 +1,150 @@
+@import "../styles/tokens.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root,
+[data-theme="light"] {
+  --bg: #ffffff;
+  --fg: #111827;
+  --muted: #6b7280;
+  --card: #f9fafb;
+  --border: #e5e7eb;
+  --ring: #0d9488;
+}
+
+[data-theme="dark"] {
+  --bg: #0a0a0b;
+  --fg: #f4f4f5;
+  --muted: #a1a1aa;
+  --card: #18181b;
+  --border: #27272a;
+  --ring: #2dd4bf;
+}
+
+body {
+  color: var(--fg);
+  background: var(--bg);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+h1, h2, h3, .font-display {
+  font-family: var(--font-display), var(--font-sans), system-ui, sans-serif;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+.focus\:not-sr-only:focus {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: inherit;
+  margin: inherit;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
+/* Microinteractions */
+a, button, input, select, textarea, [role="button"] {
+  transition-property: color, background-color, border-color, opacity, box-shadow, transform;
+  transition-duration: 160ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+button:active:not(:disabled),
+[role="button"]:active {
+  transform: scale(0.98);
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 25%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  a, button, input, select, textarea, [role="button"] {
+    transition: none;
+  }
+  button:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* Dark mode surface helpers for non-cinematic pages */
+[data-theme="dark"] .bg-white {
+  background-color: #18181b;
+}
+[data-theme="dark"] .bg-gray-50,
+[data-theme="dark"] .bg-gray-50\/50 {
+  background-color: #0f0f10;
+}
+[data-theme="dark"] .text-gray-900 {
+  color: #f4f4f5;
+}
+[data-theme="dark"] .text-gray-700,
+[data-theme="dark"] .text-gray-600 {
+  color: #a1a1aa;
+}
+[data-theme="dark"] .text-gray-500,
+[data-theme="dark"] .text-gray-400 {
+  color: #71717a;
+}
+[data-theme="dark"] .border-gray-200,
+[data-theme="dark"] .border-gray-100 {
+  border-color: #27272a;
+}
+[data-theme="dark"] .bg-teal-50 {
+  background-color: #134e4a;
+}
+
+/* Accent theme palettes (additive) – data-accent selects the brand flavour.
+   Light/dark surface helpers above are untouched. */
+[data-accent="teal-dusk"] {
+  --bg: #071a1c;
+  --fg: #e6fffb;
+  --muted: #7fd9d0;
+  --card: #0d2b2d;
+  --border: #14484a;
+  --ring: #2fd4c4;
+}
+[data-accent="sunset"] {
+  --bg: #fffaf5;
+  --fg: #431407;
+  --muted: #9a3412;
+  --card: #ffedd5;
+  --border: #fed7aa;
+  --ring: #c2410c;
+}
+[data-accent="ocean"] {
+  --bg: #f0f9ff;
+  --fg: #082f49;
+  --muted: #0369a1;
+  --card: #e0f2fe;
+  --border: #bae6fd;
+  --ring: #0369a1;
+}
+[data-accent="forest"] {
+  --bg: #f7faf5;
+  --fg: #1a2e05;
+  --muted: #3f6212;
+  --card: #ecfccb;
+  --border: #d9f99d;
+  --ring: #3f6212;
+}

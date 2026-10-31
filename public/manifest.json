@@ -1,0 +1,49 @@
+{
+  "name": "ShopNGo — Discover. Understand. Compare. Buy. Track.",
+  "short_name": "ShopNGo",
+  "description": "A multi-user marketplace to discover, understand, compare, buy, and track products.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f9fafb",
+  "theme_color": "#0f766e",
+  "categories": ["shopping", "lifestyle"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/maskable-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Search products",
+      "url": "/search",
+      "description": "Find products by name, type, or price"
+    },
+    {
+      "name": "My cart",
+      "url": "/cart",
+      "description": "View your shopping cart"
+    },
+    {
+      "name": "My orders",
+      "url": "/orders",
+      "description": "Track your orders"
+    }
+  ]
+}

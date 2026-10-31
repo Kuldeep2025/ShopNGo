@@ -1,0 +1,309 @@
+// ShopNGo Prisma schema – adapted for Firebase Authentication
+// Users are identified by Firebase UID (firebaseUid). We keep an internal User row
+// for roles, profile and application data.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  CUSTOMER
+  SELLER
+  DELIVERY_PARTNER
+  MODERATOR
+  ADMIN
+}
+
+enum ApplicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum ListingStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  SUSPENDED
+  ARCHIVED
+}
+
+enum ProductType {
+  PHYSICAL
+  DIGITAL
+  EBOOK
+  E_NOTE
+  COURSE
+  SERVICE
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+model User {
+  id           String   @id @default(cuid())
+  firebaseUid  String   @unique
+  email        String   @unique
+  displayName  String?
+  photoUrl     String?
+  roles        Role[]   @default([CUSTOMER])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  profile      Profile?
+  addresses    Address[]
+  sellerApp    SellerApplication?
+  deliveryApp  DeliveryApplication?
+  stores       Store[]
+  cart         Cart?
+  orders       Order[]  @relation("CustomerOrders")
+  reviews      Review[]
+  messages     Message[]
+
+  @@index([firebaseUid])
+  @@index([email])
+}
+
+model Profile {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phone     String?
+  bio       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Address {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label      String?
+  line1      String
+  line2      String?
+  city       String
+  state      String?
+  postalCode String
+  country    String   @default("IN")
+  isDefault  Boolean  @default(false)
+  lat        Float?
+  lng        Float?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model SellerApplication {
+  id          String            @id @default(cuid())
+  userId      String            @unique
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      ApplicationStatus @default(DRAFT)
+  businessName String?
+  description String?
+  documents   Json?
+  decisionNote String?
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model DeliveryApplication {
+  id          String            @id @default(cuid())
+  userId      String            @unique
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      ApplicationStatus @default(DRAFT)
+  vehicleType String?
+  licenseNo   String?
+  decisionNote String?
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model Store {
+  id          String   @id @default(cuid())
+  ownerId     String
+  owner       User     @relation(fields: [ownerId], references: [id])
+  name        String
+  slug        String   @unique
+  description String?
+  logoUrl     String?
+  isActive    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  listings    Listing[]
+  sellerOrders SellerOrder[]
+
+  @@index([ownerId])
+  @@index([slug])
+}
+
+model Category {
+  id        String     @id @default(cuid())
+  name      String
+  slug      String     @unique
+  parentId  String?
+  parent    Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryTree")
+  listings  Listing[]
+  createdAt DateTime   @default(now())
+}
+
+model Listing {
+  id          String        @id @default(cuid())
+  storeId     String
+  store       Store         @relation(fields: [storeId], references: [id])
+  categoryId  String?
+  category    Category?     @relation(fields: [categoryId], references: [id])
+  title       String
+  slug        String
+  description String?
+  productType ProductType
+  price       Decimal       @db.Decimal(12, 2)
+  currency    String        @default("INR")
+  status      ListingStatus @default(DRAFT)
+  stock       Int?
+  attributes  Json?
+  media       Json?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  orderItems  OrderItem[]
+  reviews     Review[]
+
+  @@unique([storeId, slug])
+  @@index([status])
+  @@index([productType])
+  @@index([categoryId])
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  updatedAt DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String  @id @default(cuid())
+  cartId    String
+  cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  listingId String
+  quantity  Int     @default(1)
+
+  @@unique([cartId, listingId])
+}
+
+model Order {
+  id              String        @id @default(cuid())
+  customerId      String
+  customer        User          @relation("CustomerOrders", fields: [customerId], references: [id])
+  status          OrderStatus   @default(PENDING_PAYMENT)
+  totalAmount     Decimal       @db.Decimal(12, 2)
+  currency        String        @default("INR")
+  shippingAddress Json?
+  paymentProvider String        @default("mock")
+  paymentRef      String?       @unique
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  sellerOrders    SellerOrder[]
+  items           OrderItem[]
+
+  @@index([customerId])
+  @@index([status])
+}
+
+model SellerOrder {
+  id          String      @id @default(cuid())
+  orderId     String
+  order       Order       @relation(fields: [orderId], references: [id])
+  storeId     String
+  store       Store       @relation(fields: [storeId], references: [id])
+  status      OrderStatus @default(PENDING_PAYMENT)
+  subtotal    Decimal     @db.Decimal(12, 2)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  items       OrderItem[]
+
+  @@index([orderId])
+  @@index([storeId])
+}
+
+model OrderItem {
+  id            String       @id @default(cuid())
+  orderId       String
+  order         Order        @relation(fields: [orderId], references: [id])
+  sellerOrderId String?
+  sellerOrder   SellerOrder? @relation(fields: [sellerOrderId], references: [id])
+  listingId     String
+  listing       Listing      @relation(fields: [listingId], references: [id])
+  titleSnapshot String
+  priceSnapshot Decimal      @db.Decimal(12, 2)
+  quantity      Int
+  productType   ProductType
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  listingId String
+  listing   Listing  @relation(fields: [listingId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  rating    Int
+  title     String?
+  body      String?
+  createdAt DateTime @default(now())
+
+  @@unique([listingId, userId])
+  @@index([listingId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  storeId   String?
+  orderId   String?
+  body      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([storeId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String?
+  action    String
+  entity    String
+  entityId  String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([actorId])
+}
