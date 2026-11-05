@@ -1,3 +1,4 @@
+import { ProductAdSlot } from "@/components/insights/ProductAdSlot";
 import { PickedForYou } from "@/components/insights/PickedForYou";
 import { CinematicHome } from "@/features/cinematic/CinematicHome";
 import { filterPublicListings, toPublicListingDTO, type PublicListingDTO } from "@/features/catalogue";
@@ -30,7 +31,9 @@ export default async function HomePage() {
   return (
     <>
       <CinematicHome listings={listings} />
+      <ProductAdSlot placement="home-between-sections" />
       <PickedForYou />
+      <ProductAdSlot placement="home-lower" offset={5} />
     </>
   );
 }

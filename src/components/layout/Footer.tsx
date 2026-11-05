@@ -5,6 +5,7 @@ import { CopyrightYear } from "@/components/layout/CopyrightYear";
 import { AnalyticsPreferencesButton } from "@/components/analytics/FirebaseAnalytics";
 import { LogoMark } from "@/features/brand/logos";
 import { Copy } from "@/features/copy/Copy";
+import { SuggestionsToggle } from "@/components/layout/SuggestionsToggle";
 
 export function Footer() {
   return (
@@ -113,6 +114,9 @@ export function Footer() {
           <p className="mt-1">{DEMO_NOTICE.footer}</p>
           <div className="mt-1">
             <AnalyticsPreferencesButton />
+          </div>
+          <div className="mt-1">
+            <SuggestionsToggle />
           </div>
         </div>
       </div>

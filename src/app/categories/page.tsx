@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ProductAdSlot } from "@/components/insights/ProductAdSlot";
 import { Copy } from "@/features/copy/Copy";
 import { toPublicCategoryDTO, type PublicCategoryDTO } from "@/features/catalogue";
 import { DEMO_CATEGORIES } from "@/lib/demo-data";
@@ -90,6 +91,7 @@ export default async function CategoriesPage() {
           ))}
         </ul>
       )}
+      <ProductAdSlot placement="categories-bottom" className="mt-8 !px-0 sm:!px-0" />
     </div>
   );
 }

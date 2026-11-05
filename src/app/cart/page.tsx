@@ -5,6 +5,7 @@ import { Copy } from "@/features/copy/Copy";
 import Link from "next/link";
 import { useAuth } from "@/features/identity/AuthProvider";
 import { Button, Alert, Spinner, Badge } from "@/components/ui";
+import { ProductAdSlot } from "@/components/insights/ProductAdSlot";
 import { SignInRequired } from "@/components/feedback/SignInRequired";
 import type { QuoteResult } from "@/features/cart/quote";
 
@@ -242,6 +243,8 @@ export default function CartPage() {
           </div>
         </div>
       )}
+
+      <ProductAdSlot placement="cart-bottom" className="mt-8 !px-0 sm:!px-0" />
 
       <p className="mt-10 text-center text-sm text-gray-500">
         <Link href="/search" className="text-teal-700 hover:underline">

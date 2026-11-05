@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, Suspense } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Input, Spinner, Alert } from "@/components/ui";
@@ -15,7 +15,9 @@ import { pickArtworkVariant } from "@/features/cinematic/layoutEngine";
 import { getListingImageUrl, getListingImageAlt } from "@/features/catalogue/media";
 import { useAuth } from "@/features/identity/AuthProvider";
 import { track } from "@/features/recommendations/track";
+import { ProductAdSlot } from "@/components/insights/ProductAdSlot";
 import { Copy } from "@/features/copy/Copy";
+import { PriceTag } from "@/features/pricing/PriceTag";
 
 type VoiceResultEvent = { results: ArrayLike<ArrayLike<{ transcript: string }>> };
 type VoiceRecognition = {
@@ -415,11 +417,12 @@ function SearchContent() {
                 : `${listings.length} result${listings.length !== 1 ? "s" : ""}${nextCursor ? "+" : ""}`}
             </p>
             <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {listings.map((l) => {
+              {listings.map((l, idx) => {
                 const artwork = pickArtworkVariant(l, "general");
                 const imageUrl = getListingImageUrl(l, true);
                 return (
-                  <li key={l.id}>
+                  <Fragment key={l.id}>
+                  <li>
                     <Link
                       href={`/products/${l.slug}`}
                       className="group flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-teal-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
@@ -444,14 +447,18 @@ function SearchContent() {
                         {PRODUCT_TYPE_LABELS[l.productType] ?? l.productType}
                         {l.store?.name ? ` · ${l.store.name}` : ""}
                       </p>
-                      <p className="mt-3 text-lg font-semibold text-teal-800">
-                        {l.currency === "INR" ? "₹" : l.currency} {l.price}
-                      </p>
+                      <PriceTag className="mt-3" price={l.price} currency={l.currency} strikePrice={l.pricing?.strikePrice} percentOff={l.pricing?.percentOff} saleEndsAt={l.pricing?.saleEndsAt} />
                       {l.inStock === false && (
                         <p className="mt-1 text-sm font-medium text-red-700">Out of stock</p>
                       )}
                     </Link>
                   </li>
+                  {(idx + 1) % 8 === 0 && (
+                    <li className="sm:col-span-2 lg:col-span-3">
+                      <ProductAdSlot placement={`search-results-${(idx + 1) / 8}`} variant="card" offset={(idx + 1) / 8 - 1} className="!px-0 sm:!px-0" />
+                    </li>
+                  )}
+                  </Fragment>
                 );
               })}
             </ul>

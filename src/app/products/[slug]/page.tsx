@@ -11,6 +11,7 @@ import { PriceComparison } from "@/components/compare/PriceComparison";
 import { ProductReviews } from "@/components/reviews/ProductReviews";
 import { FrequentlyBoughtTogether } from "@/components/insights/FrequentlyBoughtTogether";
 import { SimilarProducts } from "@/components/insights/SimilarProducts";
+import { ProductAdSlot } from "@/components/insights/ProductAdSlot";
 import { ProductViewTracker } from "@/components/insights/ProductViewTracker";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -176,6 +177,8 @@ export default async function ProductPage({ params }: Props) {
           </div>
         </div>
       </div>
+
+      <ProductAdSlot placement="product-below-details" source="similar" productRef={listing.id} className="mt-8 !px-0 sm:!px-0" />
 
       <PriceComparison listingId={listing.id} />
 
