@@ -93,8 +93,17 @@ export async function compareForQuery(q: string) {
       take: 300,
     });
   let rows = await run(words);
-  // Fewer words if the full phrase matches nothing (for example a store name in the question).
-  for (let n = words.length - 1; rows.length === 0 && n >= 1; n--) rows = await run(words.slice(0, n));
+  // When no title has every word (the question has extra words), keep the titles matching the most words.
+  if (rows.length === 0) {
+    const any = await prisma.listing.findMany({
+      where: { ...visible, OR: words.map((w) => ({ title: { contains: w, mode: "insensitive" as const } })) },
+      select,
+      take: 600,
+    });
+    const score = (t: string) => words.filter((w) => t.toLowerCase().includes(w)).length;
+    const best = Math.max(0, ...any.map((r) => score(r.title)));
+    rows = best >= 2 || (best >= 1 && words.length === 1) ? any.filter((r) => score(r.title) === best) : [];
+  }
   const offers = await withRatings(rows);
   const groups = groupByProduct(offers);
   const cheapestOverall = compareOffers(offers).cheapest;
