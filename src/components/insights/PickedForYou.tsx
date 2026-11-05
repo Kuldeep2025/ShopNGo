@@ -1,77 +1,93 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/features/identity/AuthProvider";
-import { apiCall } from "@/lib/client/api";
-import { getListingImageUrl, getListingImageAlt } from "@/features/catalogue/media";
-import type { PublicListingDTO } from "@/features/catalogue";
+import { recHeaders, track, untrack } from "@/features/recommendations/track";
+import { PickCard, type Rec } from "./PickCard";
 
-type Rec = PublicListingDTO & { reason?: string };
-
-/** "Picked for you": personalised for signed-in customers, best-rated picks for everyone else. */
+/** "Picked for you": a scrollable row on the home page. Learns from what the shopper does. */
 export function PickedForYou() {
   const { appUser, firebaseUser, loading, getIdToken } = useAuth();
   const [recs, setRecs] = useState<Rec[]>([]);
   const [personalised, setPersonalised] = useState(false);
+  const [announce, setAnnounce] = useState("");
   const signedIn = Boolean(appUser || firebaseUser);
 
   useEffect(() => {
     if (loading) return;
     let cancelled = false;
     (async () => {
-      const res = await apiCall<{ recommendations?: Rec[]; personalised?: boolean }>(
-        getIdToken,
-        "/api/recommendations/personal"
-      );
-      if (cancelled || !res.ok) return;
-      setRecs(res.data.recommendations ?? []);
-      setPersonalised(Boolean(res.data.personalised));
+      try {
+        const res = await fetch("/api/recommendations/personal?limit=10", { headers: await recHeaders(getIdToken), cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as { recommendations?: Rec[]; personalised?: boolean };
+        if (cancelled) return;
+        setRecs(data.recommendations ?? []);
+        setPersonalised(Boolean(data.personalised));
+      } catch {
+        /* the row simply stays hidden */
+      }
     })();
     return () => {
       cancelled = true;
     };
   }, [loading, signedIn, getIdToken]);
 
-  if (recs.length === 0) return null;
+  const dismiss = useCallback(
+    (rec: Rec) => {
+      setRecs((prev) => prev.filter((r) => r.id !== rec.id));
+      setAnnounce(`${rec.title} removed. We will show fewer products like this.`);
+      void track({ type: "DISMISS", productRef: rec.id }, getIdToken);
+    },
+    [getIdToken]
+  );
+
+  const toggleLike = useCallback(
+    (rec: Rec) => {
+      const next = !rec.liked;
+      setRecs((prev) => prev.map((r) => (r.id === rec.id ? { ...r, liked: next } : r)));
+      setAnnounce(next ? `${rec.title} saved. We will show more like it.` : `${rec.title} removed from saved.`);
+      if (next) void track({ type: "LIKE", productRef: rec.id }, getIdToken);
+      else void untrack(rec.id, "LIKE", getIdToken);
+    },
+    [getIdToken]
+  );
+
+  if (recs.length === 0 && !announce) return null;
   return (
     <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6" aria-labelledby="pfy-heading">
-      <h2 id="pfy-heading" className="text-2xl font-bold text-gray-900 dark:text-zinc-100">
-        {personalised ? "Picked for you" : "Customers love these"}
-      </h2>
-      <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">
-        {personalised
-          ? "Based on what you bought and how you rated things."
-          : signedIn
-            ? "Buy and rate a few products and this row will start matching your taste."
-            : "Sign in, buy and rate products to get suggestions made for you."}
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div>
+          <h2 id="pfy-heading" className="text-2xl font-bold text-gray-900 dark:text-zinc-100">
+            {personalised ? "Picked for you" : "Customers love these"}
+          </h2>
+          <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">
+            {personalised
+              ? "Based on what you bought, saved, searched and looked at. Tap Not interested to see less of something."
+              : signedIn
+                ? "Look around, save things and buy a few products, and this row will start matching your taste."
+                : "Sign in so your picks improve; you can clear your history from your account."}
+          </p>
+        </div>
+        <Link
+          href="/for-you"
+          className="rounded-lg px-3 py-2 text-sm font-semibold text-teal-800 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 dark:text-teal-300"
+        >
+          See more picks
+        </Link>
+      </div>
+      <p className="sr-only" role="status" aria-live="polite">
+        {announce}
       </p>
-      <ul className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <ul
+        className="mt-5 flex snap-x gap-4 overflow-x-auto pb-3 motion-safe:scroll-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
+        tabIndex={0}
+        aria-label="Picked for you, scroll sideways for more"
+      >
         {recs.map((l) => (
-          <li key={l.id}>
-            <Link
-              href={`/products/${l.slug}`}
-              className="group block h-full overflow-hidden rounded-2xl border border-gray-200 bg-white transition duration-300 hover:-translate-y-1 hover:border-teal-400 hover:shadow-lg motion-reduce:transition-none motion-reduce:hover:translate-y-0 dark:border-zinc-800 dark:bg-zinc-900"
-            >
-              {getListingImageUrl(l) ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={getListingImageUrl(l) as string}
-                  alt={getListingImageAlt(l)}
-                  loading="lazy"
-                  className="aspect-square w-full bg-gray-50 object-cover transition duration-500 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
-                />
-              ) : (
-                <div className="aspect-square w-full bg-teal-50 dark:bg-zinc-800" aria-hidden="true" />
-              )}
-              <div className="p-3">
-                <p className="line-clamp-2 text-sm font-medium text-gray-900 dark:text-zinc-100">{l.title}</p>
-                <p className="mt-1 text-sm font-semibold text-teal-800 dark:text-teal-300">
-                  {l.currency === "INR" ? `₹ ${l.price}` : `${l.currency} ${l.price}`}
-                </p>
-                {l.reason && <p className="mt-1 text-xs text-gray-500 dark:text-zinc-400">{l.reason}</p>}
-              </div>
-            </Link>
+          <li key={l.id} className="w-56 shrink-0 snap-start sm:w-60">
+            <PickCard rec={l} onDismiss={dismiss} onToggleLike={toggleLike} />
           </li>
         ))}
       </ul>

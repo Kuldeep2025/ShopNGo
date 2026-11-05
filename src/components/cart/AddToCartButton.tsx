@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/features/identity/AuthProvider";
 import { Button } from "@/components/ui";
 import { apiCall } from "@/lib/client/api";
+import { track } from "@/features/recommendations/track";
 
 type Props = {
   listingId: string;
@@ -31,6 +32,7 @@ export function AddToCartButton({ listingId, productTitle, size = "lg", outOfSto
     });
     setBusy(false);
     if (res.ok) {
+      void track({ type: "CART", productRef: listingId }, getIdToken);
       setMessage({ kind: "ok", text: `${productTitle} added to your cart.` });
     } else if (res.status === 401) {
       setMessage({ kind: "error", text: "Please sign in to add items to your cart." });

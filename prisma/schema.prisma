@@ -357,3 +357,32 @@ model Delivery {
 
   @@index([partnerId, status])
 }
+
+enum InteractionType {
+  VIEW
+  SEARCH
+  CART
+  LIKE
+  DISMISS
+  PURCHASE
+  REVIEW
+}
+
+/// Lightweight behaviour log used to build "Picked for you". Either userId or anonId is set.
+model UserInteraction {
+  id         String          @id @default(cuid())
+  userId     String?
+  anonId     String?
+  productRef String?
+  category   String?
+  storeId    String?
+  type       InteractionType
+  weight     Float           @default(1)
+  query      String?
+  createdAt  DateTime        @default(now())
+
+  @@index([userId, createdAt])
+  @@index([anonId, createdAt])
+  @@index([productRef, type])
+  @@index([createdAt])
+}

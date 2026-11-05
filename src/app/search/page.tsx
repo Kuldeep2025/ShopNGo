@@ -13,6 +13,8 @@ import {
 } from "@/features/catalogue";
 import { pickArtworkVariant } from "@/features/cinematic/layoutEngine";
 import { getListingImageUrl, getListingImageAlt } from "@/features/catalogue/media";
+import { useAuth } from "@/features/identity/AuthProvider";
+import { track } from "@/features/recommendations/track";
 
 type VoiceResultEvent = { results: ArrayLike<ArrayLike<{ transcript: string }>> };
 type VoiceRecognition = {
@@ -29,6 +31,9 @@ type VoiceRecognitionConstructor = new () => VoiceRecognition;
 function SearchContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { getIdToken } = useAuth();
+  const tokenRef = useRef(getIdToken);
+  tokenRef.current = getIdToken;
 
   const [q, setQ] = useState(searchParams.get("q") ?? "");
   const [type, setType] = useState(searchParams.get("type") ?? "");
@@ -153,6 +158,8 @@ function SearchContent() {
         setTotal(typeof data.total === "number" ? data.total : null);
         setNextCursor(data.nextCursor ?? null);
         setSearched(true);
+        const typed = params.get("q")?.trim();
+        if (!cursor && typed && typed.length >= 2) void track({ type: "SEARCH", query: typed.slice(0, 80) }, tokenRef.current);
       } catch {
         setError("Something went wrong. Please try again.");
       } finally {
