@@ -24,7 +24,8 @@ const display = Outfit({
 });
 
 const siteUrl =
-  process.env.APP_URL ||
+  (process.env.APP_URL && !/localhost|127\.0\.0\.1/.test(process.env.APP_URL) ? process.env.APP_URL : "") ||
+  process.env.RENDER_EXTERNAL_URL ||
   (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000");
 
 export const metadata: Metadata = {

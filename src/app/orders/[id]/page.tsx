@@ -7,6 +7,7 @@ import { useAuth } from "@/features/identity/AuthProvider";
 import { Alert, Badge, Button, Spinner } from "@/components/ui";
 import { SignInRequired } from "@/components/feedback/SignInRequired";
 import { apiCall, formatMoney } from "@/lib/client/api";
+import { DeliveryTracking } from "@/features/delivery/DeliveryTracking";
 
 type Order = {
   id: string;
@@ -122,6 +123,8 @@ export default function OrderDetailPage() {
           {error}
         </Alert>
       )}
+
+      <DeliveryTracking orderId={order.id} />
 
       <h2 className="mt-8 text-lg font-semibold text-gray-900">Items</h2>
       <ul className="mt-2 divide-y divide-gray-100 rounded-xl border border-gray-200 bg-white">

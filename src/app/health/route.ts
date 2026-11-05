@@ -8,13 +8,16 @@ import { getFirebaseAdminApp } from "@/lib/auth/firebase-admin";
 export const runtime = "nodejs";
 export async function GET() {
   const production = process.env.NODE_ENV === "production";
+  // Render provides RENDER_EXTERNAL_URL itself, so APP_URL is optional there.
+  const isLocal = (u?: string) => !u || /localhost|127\.0\.0\.1/.test(u);
+  const appUrl = !isLocal(process.env.APP_URL) ? process.env.APP_URL : process.env.RENDER_EXTERNAL_URL;
   const checks: Record<string, string> = { app: "ok" };
   if (production) {
     const hasAuth = Boolean(
       process.env.FIREBASE_ADMIN_PROJECT_ID &&
       process.env.SESSION_SECRET && process.env.SESSION_SECRET.length >= 32 &&
       process.env.NEXT_PUBLIC_FIREBASE_API_KEY && process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID &&
-      process.env.APP_URL && !/localhost|127\.0\.0\.1/.test(process.env.APP_URL)
+      !isLocal(appUrl)
     );
     checks.auth = hasAuth ? "configured" : "not_ready";
     if (!hasAuth) {
@@ -23,7 +26,7 @@ export async function GET() {
       if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) missing.push("sessionSecret");
       if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) missing.push("apiKey");
       if (!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) missing.push("projectId");
-      if (!process.env.APP_URL || /localhost|127\.0\.0\.1/.test(process.env.APP_URL)) missing.push("appUrl");
+      if (isLocal(appUrl)) missing.push("appUrl");
       checks.authMissing = missing.join(",");
     }
     if (isDatabaseConfigured() && prisma) {

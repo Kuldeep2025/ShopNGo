@@ -20,6 +20,7 @@ export function Header() {
   const { appUser, loading, signOut } = useAuth();
   const { theme, toggle } = useTheme();
   const isSeller = appUser?.roles.includes("SELLER");
+  const isDriver = appUser?.roles.includes("DELIVERY_PARTNER");
   const isModerator =
     appUser?.roles.includes("MODERATOR") || appUser?.roles.includes("ADMIN");
 
@@ -79,6 +80,14 @@ export function Header() {
               className="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-teal-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
               Sell
+            </Link>
+          )}
+          {appUser && (
+            <Link
+              href={isDriver ? "/delivery" : "/delivery/apply"}
+              className="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-teal-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              {isDriver ? "Deliveries" : "Deliver"}
             </Link>
           )}
           {isModerator && (
@@ -205,6 +214,7 @@ export function Header() {
                     { href: "/seller/orders", label: "Store orders" },
                   ]
                 : [{ href: "/seller/apply", label: "Sell on ShopNGo" }]),
+              { href: isDriver ? "/delivery" : "/delivery/apply", label: isDriver ? "My deliveries" : "Become a delivery partner" },
               ...(isModerator
                 ? [
                     { href: "/moderator/applications", label: "Review sellers" },

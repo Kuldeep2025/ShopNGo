@@ -71,6 +71,7 @@ model User {
   addresses    Address[]
   sellerApp    SellerApplication?
   deliveryApp  DeliveryApplication?
+  deliveryPartner DeliveryPartner?
   stores       Store[]
   cart         Cart?
   orders       Order[]  @relation("CustomerOrders")
@@ -131,6 +132,9 @@ model DeliveryApplication {
   userId      String            @unique
   user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   status      ApplicationStatus @default(DRAFT)
+  fullName    String?
+  phone       String?
+  city        String?
   vehicleType String?
   licenseNo   String?
   decisionNote String?
@@ -231,6 +235,7 @@ model Order {
 
   sellerOrders    SellerOrder[]
   items           OrderItem[]
+  delivery        Delivery?
 
   @@index([customerId])
   @@index([status])
@@ -306,4 +311,49 @@ model AuditLog {
 
   @@index([entity, entityId])
   @@index([actorId])
+}
+
+enum DeliveryStatus {
+  ASSIGNED
+  PICKED_UP
+  DELIVERED
+  CANCELLED
+}
+
+model DeliveryPartner {
+  id                String     @id @default(cuid())
+  userId            String     @unique
+  user              User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName          String?
+  phone             String?
+  city              String?
+  vehicleType       String?
+  isOnline          Boolean    @default(false)
+  lat               Float?
+  lng               Float?
+  accuracy          Float?
+  locationUpdatedAt DateTime?
+  deliveriesDone    Int        @default(0)
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+
+  deliveries        Delivery[]
+}
+
+model Delivery {
+  id           String          @id @default(cuid())
+  orderId      String          @unique
+  order        Order           @relation(fields: [orderId], references: [id])
+  partnerId    String
+  partner      DeliveryPartner @relation(fields: [partnerId], references: [id])
+  status       DeliveryStatus  @default(ASSIGNED)
+  destLat      Float?
+  destLng      Float?
+  claimedAt    DateTime        @default(now())
+  pickedUpAt   DateTime?
+  deliveredAt  DateTime?
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([partnerId, status])
 }
