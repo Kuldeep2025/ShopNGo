@@ -17,6 +17,15 @@ export async function GET() {
       process.env.APP_URL && !/localhost|127\.0\.0\.1/.test(process.env.APP_URL)
     );
     checks.auth = hasAuth ? "configured" : "not_ready";
+    if (!hasAuth) {
+      const missing: string[] = [];
+      if (!process.env.FIREBASE_ADMIN_PROJECT_ID) missing.push("adminProject");
+      if (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32) missing.push("sessionSecret");
+      if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) missing.push("apiKey");
+      if (!process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) missing.push("projectId");
+      if (!process.env.APP_URL || /localhost|127\.0\.0\.1/.test(process.env.APP_URL)) missing.push("appUrl");
+      checks.authMissing = missing.join(",");
+    }
     if (isDatabaseConfigured() && prisma) {
       try {
         await Promise.race([
