@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import { LegalPage, type LegalSection } from "@/features/legal/LegalPage";
 import { CONTACT_EMAIL } from "@/features/legal/meta";
+import { DEMO_NOTICE } from "@/features/legal/demoNotice";
 
 export const metadata: Metadata = {
   title: "Terms and Conditions | ShopNGo",
   description:
-    "The rules for using ShopNGo, an academic final-year marketplace project: accounts, roles, orders, demo payments, conduct, content, AI assistant and liability.",
+    "The rules for using ShopNGo, an academic final-year marketplace project: accounts, roles, orders, payments (demo mode for now), conduct, content, AI assistant and liability.",
 };
 
 const sections: LegalSection[] = [
@@ -14,7 +15,7 @@ const sections: LegalSection[] = [
     title: "Acceptance of these terms",
     paragraphs: [
       "By creating an account or using ShopNGo you agree to these Terms and Conditions and to our Privacy Policy. If you do not agree, please do not use the site.",
-      "ShopNGo is an academic final-year minor project. It is a demonstration, not a real shop.",
+      "ShopNGo is an academic final-year minor project. " + DEMO_NOTICE.terms,
     ],
   },
   {
@@ -56,9 +57,9 @@ const sections: LegalSection[] = [
   },
   {
     id: "orders",
-    title: "Orders and payments (demo mode)",
+    title: "Orders and payments (demo mode for now)",
     paragraphs: [
-      "Payments on ShopNGo run in demo or test mode. No real money is charged, and you should never enter real card, bank or UPI details. Orders, prices and delivery times are for demonstration. Placing an order does not create a real purchase, and nobody promises to deliver real goods. If real payments are ever added, these terms will be updated first.",
+      DEMO_NOTICE.termsOrders,
     ],
   },
   {
@@ -113,7 +114,7 @@ const sections: LegalSection[] = [
     id: "disclaimer",
     title: "Disclaimers",
     paragraphs: [
-      "ShopNGo is provided as is and as available, for learning and demonstration. We do not promise it will always be available, error-free or secure, and the free hosting may be slow or sleep. Product information is provided by sellers and the sample catalogue, and we do not guarantee it.",
+      "ShopNGo is provided as is and as available, for learning and demonstration at this stage. We do not promise it will always be available, error-free or secure, and the free hosting may be slow or sleep. Product information is provided by sellers and the sample catalogue, and we do not guarantee it.",
     ],
   },
   {

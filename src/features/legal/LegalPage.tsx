@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { CONTACT_EMAIL, LAST_UPDATED } from "./meta";
+import { DEMO_NOTICE } from "./demoNotice";
 
 export interface LegalSection {
   id: string;
@@ -31,9 +32,7 @@ export function LegalPage({
         </p>
         <p className="mt-4 text-base leading-relaxed text-gray-800 dark:text-zinc-200">{intro}</p>
         <p className="mt-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm leading-relaxed text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">
-          <strong>Please note:</strong> ShopNGo is an academic final-year minor project. It is not a real shop. Payments
-          are in demo or test mode, no real money is charged, and no real goods are guaranteed to be delivered. This
-          document was written by students and has not been reviewed by a lawyer.
+          <strong>Please note:</strong> {DEMO_NOTICE.banner}
         </p>
       </header>
 

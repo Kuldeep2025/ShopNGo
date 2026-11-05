@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { Reveal } from "@/features/about/Reveal";
-import { CountUp } from "@/features/about/CountUp";
-import { FEATURES, FLOW, LAYERS, PROJECT_TAGLINE, PROJECT_TITLE, STATS, TEAM } from "@/features/about/team";
+import { Copy } from "@/features/copy/Copy";
+import { RotatingLogo } from "@/features/brand/RotatingLogo";
+import { LiveStats } from "@/features/about/LiveStats";
+import { getSiteStats } from "@/features/stats/siteStats";
+import { DEMO_NOTICE } from "@/features/legal/demoNotice";
+import { FEATURES, FLOW, LAYERS, PROJECT_TAGLINE, PROJECT_TITLE, TEAM } from "@/features/about/team";
 
 export const metadata = {
   title: "About ShopNGo",
@@ -11,7 +15,10 @@ export const metadata = {
 
 const heading = "font-display text-3xl font-bold text-teal-900 dark:text-teal-300 sm:text-4xl";
 
-export default function AboutPage() {
+export const dynamic = "force-dynamic";
+
+export default async function AboutPage() {
+  const stats = await getSiteStats();
   return (
     <div className="overflow-hidden">
       <section className="relative isolate bg-gradient-to-br from-teal-950 via-teal-800 to-zinc-900 px-6 py-24 text-center text-white sm:py-32">
@@ -22,11 +29,11 @@ export default function AboutPage() {
           <p className="inline-block rounded-full border border-white/25 bg-white/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-teal-100">
             Minor project · Final year · Academic project
           </p>
+          <RotatingLogo className="mx-auto mt-8 h-16 w-16 sm:h-20 sm:w-20" />
           <h1 className="font-display mt-6 text-5xl font-extrabold sm:text-7xl">{PROJECT_TITLE}</h1>
           <p className="mx-auto mt-5 max-w-2xl text-xl text-teal-100 sm:text-2xl">{PROJECT_TAGLINE}</p>
           <p className="mx-auto mt-6 max-w-2xl text-base text-teal-50/90">
-            A complete online marketplace, built by three students: shoppers browse and buy, sellers list products,
-            moderators keep it trustworthy and delivery partners bring every order home.
+            <Copy id="about.hero.blurb" />
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link href="#team" className="inline-flex h-12 items-center rounded-lg bg-white px-6 text-sm font-semibold text-teal-900 transition hover:-translate-y-0.5 hover:bg-teal-50">
@@ -40,26 +47,13 @@ export default function AboutPage() {
       </section>
 
       <section aria-label="ShopNGo in numbers" className="relative z-10 mx-auto -mt-10 max-w-6xl px-6">
-        <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-          {STATS.map((s, i) => (
-            <li key={s.label}>
-              <Reveal delay={i * 100} className="h-full">
-                <div className="h-full rounded-2xl border border-teal-900/10 bg-white p-5 text-center shadow-lg dark:border-zinc-800 dark:bg-zinc-900">
-                  <p className="font-display text-4xl font-extrabold text-teal-700 dark:text-teal-300">
-                    <CountUp value={s.value} suffix={s.suffix} />
-                  </p>
-                  <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">{s.label}</p>
-                </div>
-              </Reveal>
-            </li>
-          ))}
-        </ul>
+        <LiveStats initial={stats} extra={[{ label: "students, one academic project", value: 3 }]} />
       </section>
 
       <section className="mx-auto max-w-3xl px-6 py-16" aria-labelledby="built-by">
         <Reveal>
           <h2 id="built-by" className={heading}>
-            Built by students, for shoppers
+            <Copy id="about.builtBy.title" />
           </h2>
           <p className="mt-5 text-lg leading-relaxed text-gray-700 dark:text-zinc-300">
             ShopNGo was built by <strong>Kuldeep Behera</strong>, <strong>Pankaj Gupta</strong> and{" "}
@@ -67,10 +61,9 @@ export default function AboutPage() {
             developed during the <strong>final year</strong> of their studies.
           </p>
           <p className="mt-4 text-base leading-relaxed text-gray-700 dark:text-zinc-300">
-            Online shopping should be clear, honest and usable by everyone. ShopNGo brings the whole journey into one
-            place: discover products, understand them with plain descriptions and comparisons, buy safely, and track the
-            delivery until it arrives. It is also designed to work well with a screen reader.
+            <Copy id="about.builtBy.body" />
           </p>
+          <p className="mt-4 text-base leading-relaxed text-gray-700 dark:text-zinc-300">{DEMO_NOTICE.about}</p>
         </Reveal>
       </section>
 
@@ -78,10 +71,10 @@ export default function AboutPage() {
         <div className="mx-auto max-w-6xl">
           <Reveal>
             <h2 id="team" className={`${heading} text-center`}>
-              The team and what each person contributed
+              <Copy id="about.team.title" />
             </h2>
             <p className="mx-auto mt-3 max-w-2xl text-center text-gray-600 dark:text-zinc-400">
-              Each member owned a separate part of the project, so every contribution below belongs to one person only.
+              <Copy id="about.team.intro" />
             </p>
           </Reveal>
           <ul className="mt-12 grid gap-6 lg:grid-cols-3">
@@ -122,7 +115,7 @@ export default function AboutPage() {
       <section className="mx-auto max-w-6xl px-6 py-16" aria-labelledby="features">
         <Reveal>
           <h2 id="features" className={`${heading} text-center`}>
-            What ShopNGo can do
+            <Copy id="about.features.title" />
           </h2>
         </Reveal>
         <ul className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -143,7 +136,7 @@ export default function AboutPage() {
         <div className="mx-auto max-w-5xl">
           <Reveal>
             <h2 id="flow" className={`${heading} text-center`}>
-              How an order travels
+              <Copy id="about.flow.title" />
             </h2>
           </Reveal>
           <ol className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
@@ -167,11 +160,10 @@ export default function AboutPage() {
       <section className="mx-auto max-w-5xl px-6 py-16" aria-labelledby="architecture">
         <Reveal>
           <h2 id="architecture" className={`${heading} text-center`}>
-            How it is built
+            <Copy id="about.architecture.title" />
           </h2>
           <p className="mx-auto mt-3 max-w-2xl text-center text-gray-600 dark:text-zinc-400">
-            The pages talk to the backend, the backend talks to the database and the services, and every sign-in is
-            checked on the server.
+            <Copy id="about.architecture.intro" />
           </p>
         </Reveal>
         <ul className="mt-10 space-y-3">
@@ -192,10 +184,10 @@ export default function AboutPage() {
       <section className="bg-teal-900 px-6 py-16 text-center text-white" aria-labelledby="cta">
         <Reveal>
           <h2 id="cta" className="font-display text-3xl font-bold sm:text-4xl">
-            Try ShopNGo
+            <Copy id="about.cta.title" />
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-teal-100">
-            Browse the catalogue, ask the assistant a question, or apply to become a seller or a delivery partner.
+            <Copy id="about.cta.body" />
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link href="/search" className="inline-flex h-12 items-center rounded-lg bg-white px-6 text-sm font-semibold text-teal-900 transition hover:-translate-y-0.5 hover:bg-teal-50">

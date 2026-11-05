@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Copy } from "@/features/copy/Copy";
 import Link from "next/link";
+import { DEMO_NOTICE } from "@/features/legal/demoNotice";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/features/identity/AuthProvider";
 import { Alert, Button, FormField, Input, Spinner } from "@/components/ui";
@@ -142,7 +144,7 @@ export default function CheckoutPage() {
     return (
       <div className="mx-auto max-w-xl px-4 py-16 text-center">
         <h1 className="text-2xl font-bold text-gray-900">Nothing to check out</h1>
-        <p className="mt-2 text-gray-600">Your cart is empty.</p>
+        <p className="mt-2 text-gray-600"><Copy id="checkout.empty.body" /></p>
         <Link href="/search" className="mt-6 inline-block">
           <Button>Browse products</Button>
         </Link>
@@ -266,7 +268,7 @@ export default function CheckoutPage() {
           Payment
         </h2>
         <p className="mt-1 text-sm text-gray-600">
-          This shop is running with demo payments. No real money is taken when you place the order.
+          {DEMO_NOTICE.checkout}
         </p>
         <Button size="lg" fullWidth className="mt-5" onClick={placeOrder} loading={placing} disabled={!quote.allAvailable}>
           {placing ? "Placing your order" : `Place order, ${formatMoney(quote.subtotal, quote.currency)}`}

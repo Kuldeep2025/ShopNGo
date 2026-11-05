@@ -4,13 +4,14 @@
  * Live part: counts and category/store lists read from the database at question time.
  */
 import { prisma, isDatabaseConfigured } from "@/lib/db";
+import { DEMO_NOTICE } from "@/features/legal/demoNotice";
 import { PROJECT_TAGLINE, PROJECT_TITLE, TEAM } from "@/features/about/team";
 
 export const SITE_KNOWLEDGE = `
 ABOUT THE WEBSITE
 ${PROJECT_TITLE} is an online shopping website and a minor project, an academic project built during the final year of a BCA course. Tagline: "${PROJECT_TAGLINE}".
-It is a multi-seller marketplace with a mall catalogue of 2230 products (clothing, electronics, grocery, home, beauty, toys, books and more), each with a description and an image.
-Payments are a demo (mock) payment for now, so no real money moves. It works as an installable app (PWA) with an offline page, supports dark mode, and is built to work with screen readers and keyboards.
+It is a multi-seller marketplace with a mall catalogue of thousands of products (the exact live count is in LIVE DATA) (clothing, electronics, grocery, home, beauty, toys, books and more), each with a description and an image.
+${DEMO_NOTICE.ai} It works as an installable app (PWA) with an offline page, supports dark mode, and is built to work with screen readers and keyboards.
 Tech: Next.js, React and TypeScript, Tailwind CSS, PostgreSQL with Prisma, Firebase sign-in, OpenStreetMap for free maps, and a free AI model with grounded answers.
 
 PAGES AND WHAT THEY DO
@@ -29,7 +30,8 @@ PAGES AND WHAT THEY DO
 
 HOW THINGS WORK
 - Sign in: with email and password, Google or phone. Signing in creates a customer account automatically.
-- Ratings and reviews: a signed-in customer who has bought a product can rate it 1 to 5 stars with a review on that product's page. Only verified buyers can review.
+- Ratings and reviews: any signed-in customer can rate a product 1 to 5 stars with an optional review on its page, one review per product (it can be edited). Buyers get a "Verified purchase" mark.
+- Price comparison: a product page has "Compare prices from other stores", ranking the same product across stores by price with the cheapest labelled.
 - Personalised suggestions: "Picked for you" uses the categories and stores of what a customer bought and rated highly, skips what they already own and lowers categories they rated poorly. Without history it shows best-rated items. Product pages also show "Frequently bought together", mined from real orders.
 - Becoming a seller: apply with business details; a moderator reviews and approves. After approval, add listings; listings are reviewed before going live.
 - Becoming a delivery partner: any signed-in person can apply; the application is approved and the Deliver option opens the delivery page. Partners go online, share location (only while online), and accept orders near them. Location uses the phone's GPS, OpenStreetMap and straight-line distance, with an estimate at about 22 km/h. It is all free.
@@ -45,7 +47,7 @@ export async function liveSiteSnapshot(): Promise<string> {
   if (!isDatabaseConfigured() || !prisma) return "LIVE DATA: not available right now.";
   try {
     const [products, stores, categories, sellers, partners, orders, reviews, topCats, topStores] = await Promise.all([
-      prisma.listing.count({ where: { status: "APPROVED" } }),
+      prisma.listing.count({ where: { status: "APPROVED", store: { isActive: true } } }),
       prisma.store.count({ where: { isActive: true } }),
       prisma.category.count(),
       prisma.user.count({ where: { roles: { has: "SELLER" } } }),

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { LegalPage, type LegalSection } from "@/features/legal/LegalPage";
 import { CONTACT_EMAIL } from "@/features/legal/meta";
+import { DEMO_NOTICE } from "@/features/legal/demoNotice";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | ShopNGo",
@@ -14,7 +15,7 @@ const sections: LegalSection[] = [
     title: "Who we are and what this policy covers",
     paragraphs: [
       "ShopNGo is a multi-store online marketplace built by Kuldeep Behera, Pankaj Gupta and Jaskaran Singh as an academic minor project in their final year. This policy explains what personal data the website collects, why, who else handles it, and what you can ask us to do.",
-      "Because this is a student project, it is run on free hosting for learning and demonstration. We try to follow good practice and the spirit of India's Digital Personal Data Protection Act, 2023 and the Information Technology Act, 2000, but we do not claim to be a registered business or to have formal legal certification.",
+      "Because this is a student project, it is run on free hosting for learning and demonstration at this stage. We try to follow good practice and the spirit of India's Digital Personal Data Protection Act, 2023 and the Information Technology Act, 2000, but we do not claim to be a registered business or to have formal legal certification.",
     ],
   },
   {
@@ -24,7 +25,7 @@ const sections: LegalSection[] = [
       "Account data: your name, email address or phone number, profile picture if your Google account provides one, and a sign-in identifier, handled through Firebase Authentication (Google sign-in, email and password, or phone code).",
       "Profile data: the display name, role (customer, seller, delivery partner, moderator or admin) and preferences you set.",
       "Addresses and location: delivery addresses you save, and your location when you place an order for delivery or when you allow your browser to share it. Delivery partners share live location while delivering an order.",
-      "Orders and payments: items, quantities, prices, delivery address, order status and history. Payments here are demo or test only, so we do not collect or store real card, UPI or bank details.",
+      "Orders and payments: items, quantities, prices, delivery address, order status and history. " + DEMO_NOTICE.privacy,
       "Reviews and content: ratings, review text and anything else you post.",
       "Seller and delivery partner applications: the store or business details, contact details and documents or answers you submit when you apply.",
       "AI assistant questions: the text you type to the shopping assistant.",
@@ -40,7 +41,7 @@ const sections: LegalSection[] = [
       "To let sellers manage listings and orders, and delivery partners complete deliveries.",
       "To show reviews, review seller and delivery applications, and keep the marketplace trustworthy.",
       "To answer your questions through the AI assistant.",
-      "To find and fix bugs, prevent misuse and demonstrate the project for academic assessment.",
+      "To find and fix bugs, prevent misuse and demonstrate the project for academic assessment while it runs in demo mode.",
     ],
     after: ["We do not sell your personal data and we do not use it for advertising."],
   },

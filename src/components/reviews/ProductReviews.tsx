@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/features/identity/AuthProvider";
 import { Alert, Button, FormField, Input, Textarea } from "@/components/ui";
@@ -12,89 +13,79 @@ type Review = {
   body: string | null;
   createdAt: string;
   author: string;
+  verified?: boolean;
+  mine?: boolean;
 };
 
-type OrderLite = {
-  status: string;
-  items: { id: string; listingId: string }[];
-};
-
-const REVIEWABLE = ["PAID", "PROCESSING", "SHIPPED", "DELIVERED"];
+const starWord = (n: number) => `${n} ${n === 1 ? "star" : "stars"}`;
 
 export function ProductReviews({ listingId }: { listingId: string }) {
-  const { appUser, getIdToken } = useAuth();
+  const { firebaseUser, loading: authLoading, getIdToken } = useAuth();
+  const signedIn = Boolean(firebaseUser);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loaded, setLoaded] = useState(false);
-  const [orderItemId, setOrderItemId] = useState<string | null>(null);
-  const [rating, setRating] = useState("5");
+  const [loadError, setLoadError] = useState(false);
+  const [rating, setRating] = useState(0);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
-  const [feedback, setFeedback] = useState<{ kind: "success" | "error"; text: string } | null>(null);
+  const [success, setSuccess] = useState("");
+  const [error, setError] = useState("");
+  const [prefilled, setPrefilled] = useState(false);
 
   const loadReviews = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/reviews?listingId=${encodeURIComponent(listingId)}`);
-      if (res.ok) {
-        const data = await res.json();
-        setReviews(data.reviews ?? []);
-      }
-    } catch {
-      /* reviews are optional content */
+    const res = await apiCall<{ reviews?: Review[] }>(getIdToken, `/api/reviews?listingId=${encodeURIComponent(listingId)}`);
+    if (res.ok) {
+      setReviews(res.data.reviews ?? []);
+      setLoadError(false);
+    } else {
+      setLoadError(true);
     }
     setLoaded(true);
-  }, [listingId]);
+  }, [getIdToken, listingId]);
 
   useEffect(() => {
+    if (authLoading) return;
     loadReviews();
-  }, [loadReviews]);
+  }, [loadReviews, authLoading]);
 
+  const mine = reviews.find((r) => r.mine);
   useEffect(() => {
-    if (!appUser) {
-      setOrderItemId(null);
-      return;
+    // Fill the form with the member's earlier review once, so editing is easy.
+    if (mine && !prefilled) {
+      setRating(mine.rating);
+      setTitle(mine.title ?? "");
+      setBody(mine.body ?? "");
+      setPrefilled(true);
     }
-    (async () => {
-      const res = await apiCall<{ orders?: OrderLite[] }>(getIdToken, "/api/orders");
-      const match = res.data.orders
-        ?.filter((o) => REVIEWABLE.includes(o.status))
-        .flatMap((o) => o.items)
-        .find((i) => i.listingId === listingId);
-      setOrderItemId(match?.id ?? null);
-    })();
-  }, [appUser, getIdToken, listingId]);
-
+  }, [mine, prefilled]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!orderItemId) return;
+    setSuccess("");
+    setError("");
+    if (rating < 1) {
+      setError("Please choose a star rating from 1 to 5 before posting.");
+      return;
+    }
     setBusy(true);
-    setFeedback(null);
-    const res = await apiCall(getIdToken, "/api/reviews", {
+    const res = await apiCall<{ updated?: boolean; verified?: boolean }>(getIdToken, "/api/reviews", {
       method: "POST",
-      body: {
-        listingId,
-        orderItemId,
-        rating: Number(rating),
-        title: title.trim() || null,
-        body: body.trim() || null,
-      },
+      body: { listingId, rating, title: title.trim() || null, body: body.trim() || null },
     });
     setBusy(false);
     if (res.ok) {
-      setFeedback({ kind: "success", text: "Thank you. Your review was posted." });
-      setTitle("");
-      setBody("");
-      setOrderItemId(null);
+      setSuccess(res.data.updated ? "Your review was updated. Thank you." : "Thank you. Your review was posted.");
+      setPrefilled(false);
       loadReviews();
+    } else if (res.status === 401) {
+      setError("Your sign-in has expired. Please sign in again and then post your review.");
     } else {
-      setFeedback({ kind: "error", text: res.data.error ?? "Could not post your review." });
+      setError(res.data.error ?? "Could not post your review. Please try again.");
     }
   }
 
-  const average = reviews.length
-    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
-    : null;
+  const average = reviews.length ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1) : null;
 
   return (
     <section className="mt-14" aria-labelledby="reviews-heading">
@@ -106,66 +97,100 @@ export function ProductReviews({ listingId }: { listingId: string }) {
           Average rating {average} out of 5, from {reviews.length} {reviews.length === 1 ? "review" : "reviews"}.
         </p>
       )}
-      {loaded && reviews.length === 0 && (
-        <p className="mt-3 text-sm text-gray-500">No reviews yet.</p>
-      )}
+      {loaded && !loadError && reviews.length === 0 && <p className="mt-3 text-sm text-gray-500">No reviews yet. Be the first to rate this product.</p>}
+      {loadError && <p className="mt-3 text-sm text-amber-800">Reviews could not be loaded right now. Please refresh in a moment.</p>}
       {reviews.length > 0 && (
         <ul className="mt-4 space-y-4">
           {reviews.map((r) => (
             <li key={r.id} className="rounded-xl border border-gray-200 bg-white p-4">
               <p className="font-medium text-gray-900">
+                <span aria-hidden="true" className="mr-1 text-amber-500">
+                  {"★".repeat(r.rating)}
+                  <span className="text-gray-300">{"★".repeat(5 - r.rating)}</span>
+                </span>
                 <span className="sr-only">Rating: </span>
                 {r.rating} out of 5{r.title ? `: ${r.title}` : ""}
               </p>
               {r.body && <p className="mt-1 whitespace-pre-wrap text-sm text-gray-700">{r.body}</p>}
               <p className="mt-2 text-xs text-gray-500">
                 {r.author} on {new Date(r.createdAt).toLocaleDateString("en-IN")}
+                {r.verified ? <span className="ml-2 font-semibold text-emerald-800">Verified purchase</span> : null}
+                {r.mine ? <span className="ml-2 font-semibold text-teal-800">Your review</span> : null}
               </p>
             </li>
           ))}
         </ul>
       )}
 
-      {orderItemId && (
-        <form onSubmit={submit} className="mt-6 max-w-lg space-y-4 rounded-xl border border-gray-200 bg-white p-5">
-          <h3 className="font-semibold text-gray-900">Write a review</h3>
-          <FormField label="Rating (1 to 5)" required>
-            {({ id, describedBy }) => (
-              <select
-                id={id}
-                aria-describedby={describedBy}
-                value={rating}
-                onChange={(e) => setRating(e.target.value)}
-                className="block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
-              >
-                {[5, 4, 3, 2, 1].map((n) => (
-                  <option key={n} value={n}>
-                    {n} out of 5
-                  </option>
+      <div className="mt-6 max-w-lg">
+        {authLoading ? null : !signedIn ? (
+          <div className="rounded-xl border border-gray-200 bg-white p-5">
+            <h3 className="font-semibold text-gray-900">Write a review</h3>
+            <p className="mt-1 text-sm text-gray-600">Sign in to rate this product and write a review.</p>
+            <Link href="/auth/sign-in" className="mt-3 inline-block">
+              <Button>Sign in to review</Button>
+            </Link>
+          </div>
+        ) : (
+          <form onSubmit={submit} className="space-y-4 rounded-xl border border-gray-200 bg-white p-5" noValidate>
+            <h3 className="font-semibold text-gray-900">{mine ? "Edit your review" : "Write a review"}</h3>
+            <p className="text-sm text-gray-600">
+              Anyone who is signed in can rate and review. You can change your review later. People who bought this product get a Verified purchase mark.
+            </p>
+            <fieldset>
+              <legend className="text-sm font-medium text-gray-900">
+                Your rating, 1 to 5 stars <span aria-hidden="true">*</span>
+              </legend>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <span key={n} className="relative">
+                    <input
+                      type="radio"
+                      name={`rating-${listingId}`}
+                      id={`rating-${listingId}-${n}`}
+                      value={n}
+                      checked={rating === n}
+                      onChange={() => setRating(n)}
+                      className="peer sr-only"
+                      required
+                    />
+                    <label
+                      htmlFor={`rating-${listingId}-${n}`}
+                      className="flex h-11 min-w-[3.5rem] cursor-pointer items-center justify-center gap-1 rounded-lg border border-gray-300 bg-white px-3 text-sm font-medium text-gray-800 peer-checked:border-amber-500 peer-checked:bg-amber-50 peer-focus-visible:ring-2 peer-focus-visible:ring-teal-600 peer-focus-visible:ring-offset-2"
+                    >
+                      <span aria-hidden="true" className={rating >= n ? "text-amber-500" : "text-gray-300"}>
+                        ★
+                      </span>
+                      <span>
+                        {n}
+                        <span className="sr-only"> {n === 1 ? "star" : "stars"}</span>
+                      </span>
+                    </label>
+                  </span>
                 ))}
-              </select>
-            )}
-          </FormField>
-          <FormField label="Title">
-            {({ id, describedBy }) => (
-              <Input id={id} aria-describedby={describedBy} maxLength={120} value={title} onChange={(e) => setTitle(e.target.value)} />
-            )}
-          </FormField>
-          <FormField label="Your review">
-            {({ id, describedBy }) => (
-              <Textarea id={id} aria-describedby={describedBy} maxLength={2000} rows={4} value={body} onChange={(e) => setBody(e.target.value)} />
-            )}
-          </FormField>
-          <Button type="submit" loading={busy}>
-            Post review
-          </Button>
-        </form>
-      )}
-      {feedback && (
-        <Alert variant={feedback.kind} className="mt-4">
-          {feedback.text}
-        </Alert>
-      )}
+              </div>
+              <p className="mt-1 text-xs text-gray-500" aria-live="polite">
+                {rating ? `Selected: ${starWord(rating)}.` : "Nothing selected yet."}
+              </p>
+            </fieldset>
+            <FormField label="Title (optional)">
+              {({ id, describedBy }) => <Input id={id} aria-describedby={describedBy} maxLength={120} value={title} onChange={(e) => setTitle(e.target.value)} />}
+            </FormField>
+            <FormField label="Your review (optional)">
+              {({ id, describedBy }) => (
+                <Textarea id={id} aria-describedby={describedBy} maxLength={2000} rows={4} value={body} onChange={(e) => setBody(e.target.value)} />
+              )}
+            </FormField>
+            <Button type="submit" loading={busy}>
+              {mine ? "Update review" : "Post review"}
+            </Button>
+          </form>
+        )}
+        <div aria-live="polite" role="status" className="mt-4">
+          {success && <Alert variant="success">{success}</Alert>}
+        </div>
+        <div aria-live="assertive">{error && <Alert variant="error">{error}</Alert>}</div>
+      </div>
     </section>
   );
 }

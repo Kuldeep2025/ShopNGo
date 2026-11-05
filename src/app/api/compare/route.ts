@@ -1,13 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma, isDatabaseConfigured } from "@/lib/db";
 import { isPubliclyVisible, toPublicListingDTO } from "@/features/catalogue";
+import { compareForListing, compareForQuery } from "@/features/compare/priceCompareDb";
 
 /**
+ * GET /api/compare?q=words  or  ?listingId=id  – same product across stores, ranked by price
  * GET /api/compare?ids=id1,id2,id3
  * Structured product comparison – numeric comparisons calculated in code.
  * Only approved public listings.
  */
 export async function GET(req: NextRequest) {
+  // Price comparison across stores: ?q=<words> or ?listingId=<id>
+  const q = (req.nextUrl.searchParams.get("q") ?? "").trim().slice(0, 200);
+  const listingId = (req.nextUrl.searchParams.get("listingId") ?? "").trim();
+  if (q || listingId) {
+    try {
+      if (listingId) {
+        const res = await compareForListing(listingId);
+        if (!res) return NextResponse.json({ error: "Product not found" }, { status: 404 });
+        return NextResponse.json(res, { headers: { "Cache-Control": "public, s-maxage=15, stale-while-revalidate=30" } });
+      }
+      const res = await compareForQuery(q);
+      if (!res) return NextResponse.json({ query: q, groups: [], cheapestOverall: null, offers: 0, source: "no-db" });
+      return NextResponse.json(res, { headers: { "Cache-Control": "public, s-maxage=15, stale-while-revalidate=30" } });
+    } catch (err) {
+      console.error("price compare error:", err instanceof Error ? err.message.slice(-200) : err);
+      return NextResponse.json({ error: "Server error" }, { status: 500 });
+    }
+  }
+
   const idsParam = req.nextUrl.searchParams.get("ids") ?? "";
   const ids = idsParam.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 4);
 

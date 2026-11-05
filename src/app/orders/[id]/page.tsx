@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { DEMO_NOTICE } from "@/features/legal/demoNotice";
 import { useParams, useSearchParams } from "next/navigation";
 import { useAuth } from "@/features/identity/AuthProvider";
 import { Alert, Badge, Button, Spinner } from "@/components/ui";
@@ -166,7 +167,7 @@ export default function OrderDetailPage() {
       <div className="mt-8 flex flex-wrap gap-3">
         {order.status === "PENDING_PAYMENT" && (
           <Button onClick={pay} loading={busy}>
-            Pay now (demo payment)
+            {DEMO_NOTICE.payButton}
           </Button>
         )}
         {canCancel && (

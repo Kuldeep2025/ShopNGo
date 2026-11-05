@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma, isDatabaseConfigured } from "@/lib/db";
 import { rateLimit } from "@/lib/security/rateLimit";
 import { groundedAsk } from "@/features/ai/ask";
+import { buildExtraEvidence } from "@/features/ai/evidenceExtras";
 import { isPubliclyVisible } from "@/features/catalogue";
 import { searchDemoListings } from "@/lib/demo-data";
 import { z } from "zod";
@@ -119,7 +120,9 @@ export async function POST(req: NextRequest) {
       pushDemoSnippets();
     }
 
-    const result = await groundedAsk(parsed.data.question, snippets);
+    // Price comparison across stores and a summary of every review go first so they are never cut off.
+    const extra = await buildExtraEvidence(parsed.data.question, parsed.data.listingId).catch(() => [] as string[]);
+    const result = await groundedAsk(parsed.data.question, [...extra, ...snippets]);
     return NextResponse.json(result);
   } catch (err) {
     console.error("ai ask error:", err instanceof Error ? err.message : err);

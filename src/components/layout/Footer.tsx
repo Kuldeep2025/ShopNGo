@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { DEMO_NOTICE } from "@/features/legal/demoNotice";
 import { FooterAuthLink } from "@/components/layout/FooterAuthLink";
 import { CopyrightYear } from "@/components/layout/CopyrightYear";
 import { AnalyticsPreferencesButton } from "@/components/analytics/FirebaseAnalytics";
@@ -109,6 +110,7 @@ export function Footer() {
           </p>
           <p className="mt-2">
             © <CopyrightYear initialYear={new Date().getFullYear()} /> ShopNGo. Built by Kuldeep Behera, Pankaj Gupta and
+          <p className="mt-1">{DEMO_NOTICE.footer}</p>
             Jaskaran Singh. Academic minor project, final year.
           </p>
           <div className="mt-1">

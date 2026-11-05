@@ -34,7 +34,7 @@ export const TEAM: TeamMember[] = [
     areas: ["Backend", "Database", "Authentication", "Deployment", "Delivery"],
     contributions: [
       "Built the backend: the APIs for catalogue, search, compare, cart, orders, payments, sellers, moderators and delivery partners",
-      "Designed the database and loaded the catalogue of 2230 mall products with descriptions and images",
+      "Designed the database and loaded the mall catalogue of over 2,000 products with descriptions and images",
       "Built sign-in with email, Google and phone, and role checks on the server for customers, sellers, moderators, delivery partners and admins",
       "Built the seller application, the moderator review, and the delivery partner system with live location and order tracking",
       "Deployed the live website, ran the database migrations, and kept it awake so it opens at any time",
@@ -55,15 +55,9 @@ export const TEAM: TeamMember[] = [
   },
 ];
 
-export const STATS = [
-  { value: 2230, suffix: "", label: "products in the catalogue" },
-  { value: 5, suffix: "", label: "kinds of users: shopper, seller, moderator, delivery partner, admin" },
-  { value: 40, suffix: "+", label: "backend endpoints" },
-  { value: 3, suffix: "", label: "students, one academic project" },
-];
 
 export const FEATURES = [
-  { title: "A full mall catalogue", text: "2230 products across clothing, electronics, grocery, home, beauty, toys, books and more, each with a description and an image." },
+  { title: "A full mall catalogue", text: "Thousands of products across clothing, electronics, grocery, home, beauty, toys, books and more, each with a description and an image." },
   { title: "Search and compare", text: "Find products by name, category and price, then compare them side by side before you buy." },
   { title: "AI shopping assistant", text: "Ask a question in plain words. It answers only from real catalogue data, and never makes up prices." },
   { title: "Cart, checkout and orders", text: "A cart that always shows the true price and stock, multi-store orders and a complete order history." },
