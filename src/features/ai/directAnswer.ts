@@ -107,6 +107,10 @@ export function directAnswer(question: string, evidence: string[], live?: string
   const lang = detectLanguage(question);
   const q = question.toLowerCase();
 
+  // Price comparison and review analysis evidence already holds the answer in one sentence.
+  const sums = evidence.map((e) => e.split("\n").find((l) => l.startsWith("Summary:"))?.slice(8).trim()).filter((x): x is string => Boolean(x));
+  if (sums.length > 0) return sums.slice(0, 3).join(" ");
+
   if (/who (built|made|created|developed)|developer|creator|\bteam\b|kisne|banaya|banai|banane|किसने|बनाया|डेवलपर/.test(q)) {
     return TXT.team[lang](TEAM.map((m) => `${m.name} (${m.role.split(",")[0]!.toLowerCase()})`).join(", "));
   }

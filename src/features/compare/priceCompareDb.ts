@@ -74,6 +74,7 @@ const STOP = new Set([
   "the", "and", "for", "which", "what", "cheaper", "cheapest", "cheap", "compare", "comparison", "price", "prices", "from",
   "store", "stores", "best", "lowest", "least", "sasta", "sabse", "kaun", "kon", "sa", "se", "ka", "ki", "ke", "hai", "kya",
   "shop", "sell", "sells", "buy", "where", "vs", "versus", "than", "with", "are", "does", "any", "about", "one", "please", "mujhe", "batao",
+  "review", "reviews", "rating", "ratings", "rated", "say", "says", "people", "think", "tell", "good", "bad", "quality", "worth", "feedback", "similar", "another", "other", "headphone", "its", "this", "that", "how", "who", "can", "you", "stars", "star", "customers", "customer",
 ]);
 
 export function searchWords(q: string): string[] {
