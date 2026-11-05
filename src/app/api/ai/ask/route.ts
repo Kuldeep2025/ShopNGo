@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma, isDatabaseConfigured } from "@/lib/db";
 import { rateLimit } from "@/lib/security/rateLimit";
 import { groundedAsk } from "@/features/ai/ask";
+import { budgetFrom } from "@/features/ai/directAnswer";
 import { buildExtraEvidence } from "@/features/ai/evidenceExtras";
 import { isPubliclyVisible } from "@/features/catalogue";
 import { searchDemoListings } from "@/lib/demo-data";
@@ -34,8 +35,10 @@ export async function POST(req: NextRequest) {
     const snippets: string[] = [];
 
     // Budget hint such as "under 1000 rupees" so gift or price questions get matching products.
-    const budgetMatch = parsed.data.question.toLowerCase().match(/(?:under|below|within|less than|upto|up to|tak|se kam)\s*(?:rs\.?|inr|₹)?\s*(\d{2,7})/);
-    const budget = budgetMatch ? Number(budgetMatch[1]) : null;
+    const budget = budgetFrom(parsed.data.question);
+    const wantsCheapest = /cheap|lowest|sasta|sasti|सस्ता/i.test(parsed.data.question);
+    // Roman Hindi and filler words that never name a product.
+    const STOP_EXTRA = ["mere", "paas", "hain", "kya", "milega", "milegi", "rupaye", "rupees", "who", "this", "that", "website", "built", "made", "kitna", "kitne", "kaun", "cheapest", "price", "show", "tell", "give", "can", "buy", "want", "need", "chahiye", "batao"];
 
     // Token-based demo matching: the raw question ("How much are the
     // wireless earbuds?") rarely substring-matches titles, so score by
@@ -82,7 +85,7 @@ export async function POST(req: NextRequest) {
             store: { isActive: true },
             ...(budget !== null ? { price: { lte: budget } } : {}),
             OR: (() => {
-              const stop = new Set(["the", "and", "for", "are", "how", "much", "what", "which", "with", "have", "you", "your", "does", "any"]);
+              const stop = new Set(["the", "and", "for", "are", "how", "much", "what", "which", "with", "have", "you", "your", "does", "any", ...STOP_EXTRA]);
               const words = parsed.data.question
                 .toLowerCase()
                 .split(/[^a-z0-9]+/)
@@ -96,6 +99,7 @@ export async function POST(req: NextRequest) {
             })(),
           },
           include: { store: true, category: true },
+          ...(wantsCheapest ? { orderBy: { price: "asc" as const } } : budget !== null ? { orderBy: { price: "desc" as const } } : {}),
           take: 6,
         });
         let found = listings;
@@ -123,7 +127,7 @@ export async function POST(req: NextRequest) {
     // Price comparison across stores and a summary of every review go first so they are never cut off.
     const extra = await buildExtraEvidence(parsed.data.question, parsed.data.listingId).catch(() => [] as string[]);
     const result = await groundedAsk(parsed.data.question, [...extra, ...snippets]);
-    return NextResponse.json(result);
+    return NextResponse.json({ ...result, evidence: undefined });
   } catch (err) {
     console.error("ai ask error:", err instanceof Error ? err.message : err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

@@ -1,3 +1,5 @@
+import { TEST_OPENROUTER_API_KEY } from "./testKeys";
+
 /**
  * AI Provider boundary – free models only.
  * AI is ON by default (set AI_ENABLED=false to turn it off). Never routes to paid models.
@@ -18,6 +20,46 @@ const GROQ_MODEL_FALLBACKS = [
 ] as const;
 
 const OPENROUTER_DEFAULT = "openrouter/free";
+
+// Verified against https://openrouter.ai/api/v1/models (Nov 2026). The free list changes often,
+// so these are only the preferred order; runtime discovery covers models that disappear.
+const OPENROUTER_FREE_MODELS = [
+  "nvidia/nemotron-3-ultra-550b-a55b:free",
+  "google/gemma-4-31b-it:free",
+  "google/gemma-4-26b-a4b-it:free",
+  "nvidia/nemotron-3.5-lightning:free",
+  OPENROUTER_DEFAULT,
+] as const;
+
+const FREE_LIST_TTL_MS = 60 * 60_000;
+let freeListCache: { at: number; ids: string[] } | null = null;
+
+/** Currently available ':free' text models from OpenRouter, cached for one hour. */
+export async function discoverFreeModels(): Promise<string[]> {
+  if (freeListCache && Date.now() - freeListCache.at < FREE_LIST_TTL_MS) return freeListCache.ids;
+  try {
+    const res = await fetch("https://openrouter.ai/api/v1/models", { signal: AbortSignal.timeout(8000) });
+    if (!res.ok) return freeListCache?.ids ?? [];
+    const data = (await res.json()) as { data?: Array<{ id?: string }> };
+    const ids = (data.data ?? [])
+      .map((m) => m.id ?? "")
+      .filter((id) => id.endsWith(":free") && !/safety|guard|embed|moderation|-vl|code/i.test(id));
+    freeListCache = { at: Date.now(), ids };
+    return ids;
+  } catch {
+    return freeListCache?.ids ?? [];
+  }
+}
+
+export function resetFreeModelCache() {
+  freeListCache = null;
+}
+
+function openRouterKey(): string | undefined {
+  const fromEnv = process.env.OPENROUTER_API_KEY?.trim();
+  if (fromEnv === "off") return undefined; // explicit opt-out of OpenRouter, including the embedded test key
+  return fromEnv || TEST_OPENROUTER_API_KEY || undefined;
+}
 
 export type AIProvider = "off" | "groq" | "openrouter";
 
@@ -173,23 +215,46 @@ export async function callAI(params: {
     }
   }
 
-  const orKey = process.env.OPENROUTER_API_KEY;
+  const orKey = openRouterKey();
   if (orKey) {
-    const model = params.model && isModelAllowed("openrouter", params.model) ? params.model : OPENROUTER_DEFAULT;
-    const r = await chatCompletion({
-      baseUrl: "https://openrouter.ai/api/v1",
-      apiKey: orKey,
-      model,
-      messages,
-      maxTokens,
-      timeoutMs,
-      extraHeaders: {
-        "HTTP-Referer": process.env.APP_URL ?? "https://shopngo.pages.dev",
-        "X-Title": "ShopNGo",
-      },
-    });
-    if ("text" in r) return { text: r.text, provider: "openrouter" };
-    errors.push(`openrouter: ${r.error}`);
+    const wanted = params.model && isModelAllowed("openrouter", params.model) ? params.model : OPENROUTER_FREE_MODELS[0];
+    const orMessages = messages;
+    const tryModel = async (model: string) =>
+      chatCompletion({
+        baseUrl: "https://openrouter.ai/api/v1",
+        apiKey: orKey,
+        model,
+        messages: orMessages,
+        // Reasoning models spend tokens thinking first, so leave room for the real answer.
+        maxTokens: Math.max(maxTokens, 1200),
+        timeoutMs,
+        extraHeaders: {
+          "HTTP-Referer": process.env.APP_URL ?? "https://shopngo-kuldeep.onrender.com",
+          "X-Title": "ShopNGo",
+        },
+      });
+    const orDeadline = Date.now() + 30_000;
+    const tried = new Set<string>();
+    let notFound = false;
+    const order = [wanted, ...OPENROUTER_FREE_MODELS.filter((m) => m !== wanted)];
+    for (const model of order) {
+      if (Date.now() > orDeadline) break;
+      tried.add(model);
+      const r = await tryModel(model);
+      if ("text" in r) return { text: r.text, provider: "openrouter" };
+      if (r.error.includes(" 404")) notFound = true;
+      errors.push(`openrouter: ${r.error}`);
+      if (r.error.includes(" 401") || r.error.includes(" 402")) break; // key problem, other models will fail the same way
+    }
+    if (notFound) {
+      const found = (await discoverFreeModels()).filter((m) => !tried.has(m)).slice(0, 3);
+      for (const model of found) {
+        if (Date.now() > orDeadline + 10_000) break;
+        const r = await tryModel(model);
+        if ("text" in r) return { text: r.text, provider: "openrouter" };
+        errors.push(`openrouter: ${r.error}`);
+      }
+    }
   }
 
   for (const ep of KEYLESS_ENDPOINTS) {
@@ -204,6 +269,6 @@ export async function callAI(params: {
 export function getFreeModelAllowList() {
   return {
     groq: GROQ_MODEL_FALLBACKS,
-    openrouter: [OPENROUTER_DEFAULT],
+    openrouter: OPENROUTER_FREE_MODELS,
   };
 }

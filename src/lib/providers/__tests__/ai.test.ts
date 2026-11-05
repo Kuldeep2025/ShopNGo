@@ -9,7 +9,7 @@ describe("callAI provider chain", () => {
   const saved = { ...process.env };
   beforeEach(() => {
     delete process.env.GROQ_API_KEY;
-    delete process.env.OPENROUTER_API_KEY;
+    process.env.OPENROUTER_API_KEY = "off"; // no OpenRouter, not even the embedded test key
     delete process.env.AI_ENABLED;
   });
   afterEach(() => {
