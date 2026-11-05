@@ -12,8 +12,6 @@ export async function GET() {
   if (production) {
     const hasAuth = Boolean(
       process.env.FIREBASE_ADMIN_PROJECT_ID &&
-      process.env.FIREBASE_ADMIN_CLIENT_EMAIL &&
-      process.env.FIREBASE_ADMIN_PRIVATE_KEY &&
       process.env.SESSION_SECRET && process.env.SESSION_SECRET.length >= 32 &&
       process.env.NEXT_PUBLIC_FIREBASE_API_KEY && process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID &&
       process.env.APP_URL && !/localhost|127\.0\.0\.1/.test(process.env.APP_URL)
