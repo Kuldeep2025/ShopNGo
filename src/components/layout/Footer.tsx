@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { FooterAuthLink } from "@/components/layout/FooterAuthLink";
+import { CopyrightYear } from "@/components/layout/CopyrightYear";
 import { AnalyticsPreferencesButton } from "@/components/analytics/FirebaseAnalytics";
 
 export function Footer() {
@@ -100,10 +101,16 @@ export function Footer() {
         </div>
         <div className="mt-12 border-t border-gray-200/90 pt-6 text-center text-xs text-gray-500 dark:border-zinc-800 dark:text-zinc-500">
           <p>
-            Built by Kuldeep Behera, Pankaj Gupta and Jaskaran Singh during their minor project, an academic project
-            developed during the final year. <Link href="/about" className="underline hover:text-teal-700 dark:hover:text-teal-400">About us</Link>
+            <Link href="/about" className="underline hover:text-teal-700 dark:hover:text-teal-400">About us</Link>
+            {" · "}
+            <Link href="/privacy" className="underline hover:text-teal-700 dark:hover:text-teal-400">Privacy Policy</Link>
+            {" · "}
+            <Link href="/terms" className="underline hover:text-teal-700 dark:hover:text-teal-400">Terms and Conditions</Link>
           </p>
-          © {new Date().getFullYear()} ShopNGo. All rights reserved.
+          <p className="mt-2">
+            © <CopyrightYear initialYear={new Date().getFullYear()} /> ShopNGo. Built by Kuldeep Behera, Pankaj Gupta and
+            Jaskaran Singh. Academic minor project, final year.
+          </p>
           <div className="mt-1">
             <AnalyticsPreferencesButton />
           </div>

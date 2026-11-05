@@ -222,6 +222,11 @@ export default function SignInPage() {
             </>
           )}
         </p>
+        <p className="text-center text-xs text-gray-600">
+          By continuing you agree to our{" "}
+          <Link href="/terms" className="font-medium text-teal-700 underline">Terms</Link> and{" "}
+          <Link href="/privacy" className="font-medium text-teal-700 underline">Privacy Policy</Link>.
+        </p>
       </form>
 
       <p className="mt-8 text-center text-sm text-gray-500">

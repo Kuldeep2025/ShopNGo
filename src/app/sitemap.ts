@@ -10,7 +10,7 @@ function base() {
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const b = base().replace(/\/$/, "");
-  return ["", "/about", "/search", "/categories", "/stores", "/delivery/apply"].map((p) => ({
+  return ["", "/about", "/privacy", "/terms", "/search", "/categories", "/stores", "/delivery/apply"].map((p) => ({
     url: `${b}${p}`,
     changeFrequency: "daily" as const,
     priority: p === "" ? 1 : 0.7,
