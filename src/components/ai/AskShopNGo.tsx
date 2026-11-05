@@ -52,13 +52,13 @@ export function AskShopNGo() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setError(data.error ?? "Assistant unavailable right now");
+        setError(res.status === 429 ? (data.error ?? "Please wait a minute and try again.") : "The assistant is busy right now. Please try again in a moment.");
       } else {
         setAnswer(data.answer ?? "");
         setSource(data.source ?? null);
       }
     } catch {
-      setError("Network error – please try again");
+      setError("Could not reach the assistant. Please check your connection and try again.");
     } finally {
       setLoading(false);
     }
@@ -92,10 +92,10 @@ export function AskShopNGo() {
           <div className="max-h-72 overflow-y-auto p-4">
             {!answer && !loading && !error && (
               <div className="space-y-2 text-sm text-gray-600 dark:text-zinc-400">
-                <p>Hi! I can answer questions about our catalogue — prices, product types, and stores.</p>
+                <p>Hi! Ask me anything: about our products, prices, stores, the developers, or shopping ideas. No sign-in needed.</p>
                 <p className="text-xs">Try:</p>
                 <ul className="space-y-1">
-                  {["How much are the earbuds?", "What courses are available?", "Is there a physics notes PDF?"].map((s) => (
+                  {["Who built this website?", "Which stores and categories are there?", "Suggest a gift under 1000 rupees"].map((s) => (
                     <li key={s}>
                       <button
                         type="button"
@@ -109,13 +109,16 @@ export function AskShopNGo() {
                 </ul>
               </div>
             )}
+            <div aria-live="polite" aria-atomic="true" className="sr-only">
+              {loading ? "Thinking" : error ? error : answer ? `Answer: ${answer}` : ""}
+            </div>
             {loading && (
               <div className="flex justify-center py-4">
                 <Spinner size="md" label="Thinking" />
               </div>
             )}
             {error && (
-              <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
+              <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950 dark:text-red-300">
                 {error}
               </p>
             )}
@@ -125,7 +128,7 @@ export function AskShopNGo() {
                   {answer}
                 </p>
                 <p className="text-[11px] text-gray-400">
-                  {source === "ai" ? "Answered by AI from live catalogue data" : "Fallback answer – AI not active"}
+                  {source === "ai" ? "Answered by AI using ShopNGo live data" : "Basic catalogue answer (AI is busy, please try again)"}
                 </p>
               </div>
             )}
@@ -135,10 +138,10 @@ export function AskShopNGo() {
             <input
               value={question}
               onChange={(e) => setQuestion(e.target.value)}
-              placeholder="Ask about any product…"
+              placeholder="Ask anything…"
               className="min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100"
               aria-label="Your question"
-              maxLength={500}
+              maxLength={1000}
             />
             <Button type="submit" size="sm" loading={loading} className="shrink-0">
               Ask

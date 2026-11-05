@@ -1,6 +1,6 @@
 /**
  * AI Provider boundary – free models only.
- * AI is OFF by default. Never routes to paid models.
+ * AI is ON by default (set AI_ENABLED=false to turn it off). Never routes to paid models.
  *
  * Keys are read from server-side environment variables only
  * (GROQ_API_KEY / OPENROUTER_API_KEY) and are never bundled for the client.
@@ -87,35 +87,49 @@ async function chatCompletion(params: {
   }
 }
 
+export type AIResult = { text: string; provider: "groq" | "openrouter" | "keyless" } | { error: string };
+
+const KEYLESS_URL = "https://text.pollinations.ai/openai";
+const KEYLESS_MODEL = "openai";
+
+async function keylessCompletion(messages: ChatMessage[], maxTokens: number, timeoutMs: number): Promise<{ text: string } | { error: string }> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(KEYLESS_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ model: KEYLESS_MODEL, messages, max_tokens: maxTokens, temperature: 0.3, stream: false }),
+      signal: controller.signal,
+    });
+    if (!res.ok) return { error: `Keyless provider returned ${res.status}` };
+    const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    const text = data.choices?.[0]?.message?.content?.trim();
+    if (!text) return { error: "Empty response from keyless provider" };
+    return { text };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    return { error: msg.includes("abort") ? "Request timed out" : msg };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * Provider chain: Groq (if key) -> OpenRouter (if key) -> keyless provider.
+ * Every failure (429, timeout, error) falls through to the next one.
+ * Returns an error only when all of them fail; the caller then uses the offline summary.
+ */
 export async function callAI(params: {
-  provider: AIProvider;
-  model: string;
+  provider?: AIProvider;
+  model?: string;
   prompt: string;
   system?: string;
   maxTokens?: number;
   timeoutMs?: number;
-}): Promise<{ text: string } | { error: string }> {
-  if (params.provider === "off") {
+}): Promise<AIResult> {
+  if (params.provider === "off" || process.env.AI_ENABLED === "false") {
     return { error: "AI is disabled" };
-  }
-
-  if (!params.model) {
-    params = { ...params, model: defaultModel(params.provider) };
-  }
-
-  if (!isModelAllowed(params.provider, params.model)) {
-    return {
-      error: `Model "${params.model}" is not in the free-model allow-list for ${params.provider}. Paid models are forbidden.`,
-    };
-  }
-
-  const apiKey =
-    params.provider === "groq"
-      ? process.env.GROQ_API_KEY
-      : process.env.OPENROUTER_API_KEY;
-
-  if (!apiKey) {
-    return { error: `No API key configured for ${params.provider}` };
   }
 
   const messages: ChatMessage[] = [
@@ -127,38 +141,55 @@ export async function callAI(params: {
     },
     { role: "user", content: params.prompt },
   ];
+  const maxTokens = params.maxTokens ?? 512;
+  const timeoutMs = params.timeoutMs ?? 10_000;
+  const errors: string[] = [];
 
-  const base: Parameters<typeof chatCompletion>[0] = {
-    baseUrl:
-      params.provider === "groq"
-        ? "https://api.groq.com/openai/v1"
-        : "https://openrouter.ai/api/v1",
-    apiKey,
-    model: params.model,
-    messages,
-    maxTokens: params.maxTokens ?? 512,
-    timeoutMs: params.timeoutMs ?? 10_000,
-    extraHeaders:
-      params.provider === "openrouter"
-        ? {
-            "HTTP-Referer": process.env.APP_URL ?? "https://shopngo.pages.dev",
-            "X-Title": "ShopNGo",
-          }
-        : undefined,
-  };
-
-  const first = await chatCompletion(base);
-  if ("text" in first) return first;
-
-  // Groq: retry the next free model in the fallback chain
-  if (params.provider === "groq") {
-    const idx = (GROQ_MODEL_FALLBACKS as readonly string[]).indexOf(params.model);
-    for (const model of GROQ_MODEL_FALLBACKS.slice(idx + 1)) {
-      const retry = await chatCompletion({ ...base, model });
-      if ("text" in retry) return retry;
+  const groqKey = process.env.GROQ_API_KEY;
+  if (groqKey) {
+    const wanted = params.model && isModelAllowed("groq", params.model) ? params.model : GROQ_MODEL_FALLBACKS[0];
+    const order = [wanted, ...GROQ_MODEL_FALLBACKS.filter((m) => m !== wanted)];
+    for (const model of order) {
+      const r = await chatCompletion({
+        baseUrl: "https://api.groq.com/openai/v1",
+        apiKey: groqKey,
+        model,
+        messages,
+        maxTokens,
+        timeoutMs,
+      });
+      if ("text" in r) return { text: r.text, provider: "groq" };
+      errors.push(`groq: ${r.error}`);
     }
   }
-  return first;
+
+  const orKey = process.env.OPENROUTER_API_KEY;
+  if (orKey) {
+    const model = params.model && isModelAllowed("openrouter", params.model) ? params.model : OPENROUTER_DEFAULT;
+    const r = await chatCompletion({
+      baseUrl: "https://openrouter.ai/api/v1",
+      apiKey: orKey,
+      model,
+      messages,
+      maxTokens,
+      timeoutMs,
+      extraHeaders: {
+        "HTTP-Referer": process.env.APP_URL ?? "https://shopngo.pages.dev",
+        "X-Title": "ShopNGo",
+      },
+    });
+    if ("text" in r) return { text: r.text, provider: "openrouter" };
+    errors.push(`openrouter: ${r.error}`);
+  }
+
+  // Keyless provider: a second try because the free service can be busy.
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const r = await keylessCompletion(messages, maxTokens, Math.max(timeoutMs, 25_000));
+    if ("text" in r) return { text: r.text, provider: "keyless" };
+    errors.push(`keyless: ${r.error}`);
+  }
+
+  return { error: errors.join(" | ").slice(0, 400) };
 }
 
 export function getFreeModelAllowList() {

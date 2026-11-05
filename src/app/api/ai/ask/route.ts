@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma, isDatabaseConfigured } from "@/lib/db";
-import { getSessionUser } from "@/lib/auth/session";
 import { rateLimit } from "@/lib/security/rateLimit";
 import { groundedAsk } from "@/features/ai/ask";
 import { isPubliclyVisible } from "@/features/catalogue";
@@ -8,29 +7,21 @@ import { searchDemoListings } from "@/lib/demo-data";
 import { z } from "zod";
 
 const askSchema = z.object({
-  question: z.string().min(3).max(4000),
+  question: z.string().min(3).max(1000),
   listingId: z.string().optional(),
 });
 
 /**
  * POST /api/ai/ask
- * Grounded AI Ask – free models only, falls back when unavailable.
+ * Grounded AI Ask – open to guests, free models only, falls back when unavailable.
  */
 export async function POST(req: NextRequest) {
   try {
-    const user = await getSessionUser(req.headers.get("authorization"));
-    const userLimit = rateLimit(
-      `ai:user:${user?.id ?? "guest"}`,
-      Number(process.env.AI_USER_DAILY_REQUEST_LIMIT ?? 30),
-      86_400_000
-    );
-    const globalLimit = rateLimit(
-      "ai:global",
-      Number(process.env.AI_GLOBAL_DAILY_REQUEST_LIMIT ?? 500),
-      86_400_000
-    );
-    if (!userLimit.allowed || !globalLimit.allowed) {
-      return NextResponse.json({ error: "Daily AI request limit reached" }, { status: 429 });
+    // Open to guests. Only a light per-IP guard (no daily caps).
+    const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || req.headers.get("x-real-ip") || "unknown";
+    const limit = rateLimit(`ai:ip:${ip}`, 20, 60_000);
+    if (!limit.allowed) {
+      return NextResponse.json({ error: "Too many questions at once. Please wait a minute and try again." }, { status: 429 });
     }
 
     const body = await req.json();
@@ -40,6 +31,10 @@ export async function POST(req: NextRequest) {
     }
 
     const snippets: string[] = [];
+
+    // Budget hint such as "under 1000 rupees" so gift or price questions get matching products.
+    const budgetMatch = parsed.data.question.toLowerCase().match(/(?:under|below|within|less than|upto|up to|tak|se kam)\s*(?:rs\.?|inr|₹)?\s*(\d{2,7})/);
+    const budget = budgetMatch ? Number(budgetMatch[1]) : null;
 
     // Token-based demo matching: the raw question ("How much are the
     // wireless earbuds?") rarely substring-matches titles, so score by
@@ -51,6 +46,7 @@ export async function POST(req: NextRequest) {
         .split(/[^a-z0-9]+/)
         .filter((t) => t.length >= 3 && !stop.has(t));
       const scored = searchDemoListings({})
+        .filter((l) => budget === null || Number(l.price) <= budget)
         .map((l) => {
           const hay = `${l.title} ${l.description ?? ""} ${l.category?.name ?? ""}`.toLowerCase();
           return { l, score: tokens.reduce((n, t) => (hay.includes(t) ? n + 1 : n), 0) };
@@ -58,7 +54,7 @@ export async function POST(req: NextRequest) {
         .sort((a, b) => b.score - a.score)
         .filter((x) => x.score > 0)
         .slice(0, 5);
-      const picks = (scored.length ? scored.map((x) => x.l) : searchDemoListings({}).slice(0, 5));
+      const picks = (scored.length ? scored.map((x) => x.l) : searchDemoListings({}).filter((l) => budget === null || Number(l.price) <= budget).slice(0, 5));
       for (const l of picks) {
         snippets.push(
           `Title: ${l.title}\nType: ${l.productType}\nPrice: ${l.currency} ${l.price}\nDescription: ${l.description ?? "N/A"}\nStore: ${l.store.name}`
@@ -83,6 +79,7 @@ export async function POST(req: NextRequest) {
           where: {
             status: "APPROVED",
             store: { isActive: true },
+            ...(budget !== null ? { price: { lte: budget } } : {}),
             OR: (() => {
               const stop = new Set(["the", "and", "for", "are", "how", "much", "what", "which", "with", "have", "you", "your", "does", "any"]);
               const words = parsed.data.question
@@ -100,7 +97,16 @@ export async function POST(req: NextRequest) {
           include: { store: true, category: true },
           take: 6,
         });
-        for (const l of listings) {
+        let found = listings;
+        if (found.length === 0) {
+          found = await prisma.listing.findMany({
+            where: { status: "APPROVED", store: { isActive: true }, ...(budget !== null ? { price: { lte: budget } } : {}) },
+            include: { store: true, category: true },
+            orderBy: { createdAt: "desc" },
+            take: 8,
+          });
+        }
+        for (const l of found) {
           if (isPubliclyVisible(l)) {
             snippets.push(
               `Title: ${l.title}\nType: ${l.productType}\nCategory: ${l.category?.name ?? "N/A"}\nPrice: ${l.currency} ${l.price}\nStock: ${l.stock ?? "n/a"}\nDescription: ${(l.description ?? "N/A").slice(0, 300)}\nStore: ${l.store.name}`
