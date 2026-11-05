@@ -37,6 +37,16 @@ Rules:
 const answerCache = new Map<string, { at: number; text: string; provider: "groq" | "openrouter" | "keyless" }>();
 const CACHE_MS = 10 * 60_000;
 
+/** Remove markdown symbols so screen readers do not read out asterisks and hashes. */
+export function plainText(t: string): string {
+  return t
+    .replace(/\*\*|__|`/g, "")
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+    .replace(/^\s*[*]\s+/gm, "- ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 export async function groundedAsk(question: string, contextSnippets: string[]): Promise<{
   answer: string;
   evidence: string[];
@@ -60,7 +70,7 @@ export async function groundedAsk(question: string, contextSnippets: string[]): 
     return { answer: hit.text, evidence, source: "ai", provider: hit.provider };
   }
 
-  const result = await callAI({
+  const raw = await callAI({
     model: env.AI_MODEL && env.AI_MODEL.trim() ? env.AI_MODEL : "",
     system: AI_SYSTEM_PROMPT,
     prompt,
@@ -68,9 +78,10 @@ export async function groundedAsk(question: string, contextSnippets: string[]): 
     timeoutMs: 15_000,
   });
 
-  if ("error" in result) {
+  if ("error" in raw) {
     return { answer: summariseEvidence(evidence), evidence, source: "fallback", provider: "none" };
   }
+  const result = { ...raw, text: plainText(raw.text) };
 
   if (answerCache.size > 100) answerCache.clear();
   answerCache.set(cacheKey, { at: Date.now(), text: result.text, provider: result.provider });

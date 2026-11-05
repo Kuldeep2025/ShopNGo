@@ -7,10 +7,9 @@ import { prisma, isDatabaseConfigured } from "@/lib/db";
 import { pickArtworkVariant } from "@/features/cinematic/layoutEngine";
 import { getListingImageUrl, getListingImageAlt } from "@/features/catalogue/media";
 import { AddToCartButton } from "@/components/cart/AddToCartButton";
+import { PriceComparison } from "@/components/compare/PriceComparison";
 import { ProductReviews } from "@/components/reviews/ProductReviews";
 import { FrequentlyBoughtTogether } from "@/components/insights/FrequentlyBoughtTogether";
-import { SimilarProducts } from "@/components/insights/SimilarProducts";
-import { ProductViewTracker } from "@/components/insights/ProductViewTracker";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -28,13 +27,14 @@ async function getProduct(slug: string): Promise<{
     } : null;
   }
   try {
-    const listing = await prisma.listing.findFirst({
-      where: { slug },
-      include: {
-        store: { select: { id: true, name: true, slug: true, isActive: true, description: true } },
-        category: { select: { id: true, name: true, slug: true } },
-      },
-    });
+    // The id also works in the address, so two stores selling the same item can each be linked exactly.
+    const include = {
+      store: { select: { id: true, name: true, slug: true, isActive: true, description: true } },
+      category: { select: { id: true, name: true, slug: true } },
+    };
+    const listing =
+      (await prisma.listing.findUnique({ where: { id: slug }, include })) ??
+      (await prisma.listing.findFirst({ where: { slug }, include }));
     if (listing && isPubliclyVisible(listing)) {
       return {
         listing: toPublicListingDTO(listing),
@@ -175,12 +175,12 @@ export default async function ProductPage({ params }: Props) {
         </div>
       </div>
 
+      <PriceComparison listingId={listing.id} />
+
       <ProductReviews listingId={listing.id} />
 
       <FrequentlyBoughtTogether slug={listing.slug} />
 
-      <SimilarProducts listingId={listing.id} />
-      <ProductViewTracker listingId={listing.id} />
     </div>
   );
 }
