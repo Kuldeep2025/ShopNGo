@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600" role="img" aria-labelledby="t d" font-family="Helvetica, Arial, sans-serif">
+<title id="t">PureHaus Studio Hand Towel Pair - Grey</title><desc id="d">Illustration of PureHaus Studio Hand Towel Pair, Grey, in the Bath &amp; Laundry category</desc>
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#667085" stop-opacity="0.16"/><stop offset="1" stop-color="#667085" stop-opacity="0.04"/></linearGradient></defs>
+<rect width="600" height="600" fill="#f7f8fb"/><rect width="600" height="600" fill="url(#g)"/>
+<circle cx="300" cy="215" r="150" fill="#ffffff" stroke="#667085" stroke-opacity="0.35" stroke-width="3"/>
+<g transform="translate(204 119) scale(8)" fill="none" stroke="#667085" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M10 4 8 6"/><path d="M17 19v2"/><path d="M2 12h20"/><path d="M7 19v2"/><path d="M9 5 7.621 3.621A2.121 2.121 0 0 0 4 5v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/></g>
+<text x="300" y="410" text-anchor="middle" font-size="22" letter-spacing="3" font-weight="700" fill="#667085">PUREHAUS</text>
+<text x="300" y="468" text-anchor="middle" font-size="30" font-weight="700" fill="#1b1f2a">Hand Towel Pair</text>
+<text x="300" y="510" text-anchor="middle" font-size="22" fill="#4a5163">Grey</text>
+<text x="300" y="578" text-anchor="middle" font-size="16" fill="#7a8196">Bath &amp; Laundry - ShopNGo Mall</text>
+</svg>

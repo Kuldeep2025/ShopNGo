@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600" role="img" aria-labelledby="t d" font-family="Helvetica, Arial, sans-serif">
+<title id="t">Pacer Neo Cycling Helmet - Orange</title><desc id="d">Illustration of Pacer Neo Cycling Helmet, Orange, in the Outdoor &amp; Cycling category</desc>
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9701c" stop-opacity="0.16"/><stop offset="1" stop-color="#d9701c" stop-opacity="0.04"/></linearGradient></defs>
+<rect width="600" height="600" fill="#f7f8fb"/><rect width="600" height="600" fill="url(#g)"/>
+<circle cx="300" cy="215" r="150" fill="#ffffff" stroke="#d9701c" stroke-opacity="0.35" stroke-width="3"/>
+<g transform="translate(204 119) scale(8)" fill="none" stroke="#d9701c" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></g>
+<text x="300" y="410" text-anchor="middle" font-size="22" letter-spacing="3" font-weight="700" fill="#d9701c">PACER</text>
+<text x="300" y="468" text-anchor="middle" font-size="30" font-weight="700" fill="#1b1f2a">Cycling Helmet</text>
+<text x="300" y="510" text-anchor="middle" font-size="22" fill="#4a5163">Orange</text>
+<text x="300" y="578" text-anchor="middle" font-size="16" fill="#7a8196">Outdoor &amp; Cycling - ShopNGo Mall</text>
+</svg>

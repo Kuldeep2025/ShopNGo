@@ -35,7 +35,8 @@ export function getListingImageUrl(
       )
     : [];
 
-  if (media.length > 0 && !localOnly) return media[0]!.url;
+  const usable = localOnly ? media.filter((m) => m.url.startsWith("/")) : media;
+  if (usable.length > 0) return usable[0]!.url;
 
   const attrs =
     listing.attributes && typeof listing.attributes === "object" && !Array.isArray(listing.attributes)

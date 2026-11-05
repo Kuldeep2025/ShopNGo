@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600" role="img" aria-labelledby="t d" font-family="Helvetica, Arial, sans-serif">
+<title id="t">Roamer Neo Silk Scarf - Brown</title><desc id="d">Illustration of Roamer Neo Silk Scarf, Brown, in the Watches &amp; Accessories category</desc>
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a5a3a" stop-opacity="0.16"/><stop offset="1" stop-color="#8a5a3a" stop-opacity="0.04"/></linearGradient></defs>
+<rect width="600" height="600" fill="#f7f8fb"/><rect width="600" height="600" fill="url(#g)"/>
+<circle cx="300" cy="215" r="150" fill="#ffffff" stroke="#8a5a3a" stroke-opacity="0.35" stroke-width="3"/>
+<g transform="translate(204 119) scale(8)" fill="none" stroke="#8a5a3a" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="6"/><polyline points="12 10 12 12 13 13"/><path d="m16.13 7.66-.81-4.05a2 2 0 0 0-2-1.61h-2.68a2 2 0 0 0-2 1.61l-.78 4.05"/><path d="m7.88 16.36.8 4a2 2 0 0 0 2 1.61h2.72a2 2 0 0 0 2-1.61l.81-4.05"/></g>
+<text x="300" y="410" text-anchor="middle" font-size="22" letter-spacing="3" font-weight="700" fill="#8a5a3a">ROAMER</text>
+<text x="300" y="468" text-anchor="middle" font-size="30" font-weight="700" fill="#1b1f2a">Silk Scarf</text>
+<text x="300" y="510" text-anchor="middle" font-size="22" fill="#4a5163">Brown</text>
+<text x="300" y="578" text-anchor="middle" font-size="16" fill="#7a8196">Watches &amp; Accessories - ShopNGo Mall</text>
+</svg>

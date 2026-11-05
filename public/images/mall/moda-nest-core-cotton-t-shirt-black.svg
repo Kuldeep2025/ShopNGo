@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600" role="img" aria-labelledby="t d" font-family="Helvetica, Arial, sans-serif">
+<title id="t">Moda Nest Core Cotton T-Shirt - Black</title><desc id="d">Illustration of Moda Nest Core Cotton T-Shirt, Black, in the Men's Clothing category</desc>
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2b2b33" stop-opacity="0.16"/><stop offset="1" stop-color="#2b2b33" stop-opacity="0.04"/></linearGradient></defs>
+<rect width="600" height="600" fill="#f7f8fb"/><rect width="600" height="600" fill="url(#g)"/>
+<circle cx="300" cy="215" r="150" fill="#ffffff" stroke="#2b2b33" stroke-opacity="0.35" stroke-width="3"/>
+<g transform="translate(204 119) scale(8)" fill="none" stroke="#2b2b33" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M20.38 3.46 16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"/></g>
+<text x="300" y="410" text-anchor="middle" font-size="22" letter-spacing="3" font-weight="700" fill="#2b2b33">MODA NEST</text>
+<text x="300" y="468" text-anchor="middle" font-size="30" font-weight="700" fill="#1b1f2a">Cotton T-Shirt</text>
+<text x="300" y="510" text-anchor="middle" font-size="22" fill="#4a5163">Black</text>
+<text x="300" y="578" text-anchor="middle" font-size="16" fill="#7a8196">Men's Clothing - ShopNGo Mall</text>
+</svg>

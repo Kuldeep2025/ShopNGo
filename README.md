@@ -25,6 +25,12 @@ npm run db:setup             # applies migrations and loads sample data
 
 Alternative: `npm run db:push` then `npm run db:seed`. The seed is safe to run again.
 
+### Mall catalogue
+
+The seed adds 2,230 mall products across 10 departments and 41 sub-categories (15 stores), each with a name, brand, price, stock, a three-sentence description and an image with alt text. It also adds about 3,000 past orders and 1,400 reviews so recommendations and analytics have data. Products are generated from a fixed seed (`src/lib/mall`), so every run produces the same catalogue and re-running adds nothing twice.
+
+The images are generated illustrations, not photographs. They live in `public/images/mall`; `npm run mall:images` rewrites them. Search pages hold up to 50 products and use page cursors, so the whole catalogue can be walked in any sort order.
+
 ## Environment variables
 
 - Firebase client: NEXT_PUBLIC_FIREBASE_API_KEY, _AUTH_DOMAIN, _PROJECT_ID, _STORAGE_BUCKET, _MESSAGING_SENDER_ID, _APP_ID (_MEASUREMENT_ID optional)
@@ -42,6 +48,10 @@ npm install
 npm run dev
 npm run typecheck && npm run lint && npm test
 ```
+
+### Local end-to-end check
+
+Run the app against a local Postgres with `FIREBASE_ADMIN_PROJECT_ID=demo-shopngo` and `FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099`, start `node scripts/fake-auth-emulator.mjs`, then run `npm run e2e` (set `BASE` if the app is not on port 3000). It signs test users in with unsigned tokens and walks through browsing, search, cart, checkout, demo payment, orders, cancel, reviews, seller and moderator flows, admin analytics and the PWA files. It does not test real Firebase sign-in.
 
 ## PWA
 

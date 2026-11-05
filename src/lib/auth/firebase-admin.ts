@@ -12,12 +12,15 @@ export async function getFirebaseAdminApp() {
 
   const env = getServerEnv();
 
-  if (
-    !env.FIREBASE_ADMIN_PROJECT_ID ||
-    !env.FIREBASE_ADMIN_CLIENT_EMAIL ||
-    !env.FIREBASE_ADMIN_PRIVATE_KEY ||
-    env.FIREBASE_ADMIN_PROJECT_ID.includes("REPLACE_ME")
-  ) {
+  const projectId =
+    env.FIREBASE_ADMIN_PROJECT_ID || process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  const hasServiceAccount = Boolean(
+    env.FIREBASE_ADMIN_CLIENT_EMAIL &&
+      env.FIREBASE_ADMIN_PRIVATE_KEY &&
+      !env.FIREBASE_ADMIN_CLIENT_EMAIL.includes("REPLACE_ME"),
+  );
+
+  if (!projectId || projectId.includes("REPLACE_ME")) {
     return null;
   }
 
@@ -28,12 +31,17 @@ export async function getFirebaseAdminApp() {
       return admin.app();
     }
 
-    const privateKey = env.FIREBASE_ADMIN_PRIVATE_KEY.replace(/\\n/g, "\n");
+    if (!hasServiceAccount) {
+      // Project-ID-only mode: enough to verify Firebase ID tokens (public certs).
+      return admin.initializeApp({ projectId });
+    }
+
+    const privateKey = (env.FIREBASE_ADMIN_PRIVATE_KEY as string).replace(/\\n/g, "\n");
 
     return admin.initializeApp({
       credential: admin.credential.cert({
-        projectId: env.FIREBASE_ADMIN_PROJECT_ID,
-        clientEmail: env.FIREBASE_ADMIN_CLIENT_EMAIL,
+        projectId,
+        clientEmail: env.FIREBASE_ADMIN_CLIENT_EMAIL as string,
         privateKey,
       }),
     });

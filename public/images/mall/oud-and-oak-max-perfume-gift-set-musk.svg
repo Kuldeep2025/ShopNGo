@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600" role="img" aria-labelledby="t d" font-family="Helvetica, Arial, sans-serif">
+<title id="t">Oud &amp; Oak Max Perfume Gift Set - Musk</title><desc id="d">Illustration of Oud &amp; Oak Max Perfume Gift Set, Musk, in the Fragrance category</desc>
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="hsl(342 55% 38%)" stop-opacity="0.16"/><stop offset="1" stop-color="hsl(342 55% 38%)" stop-opacity="0.04"/></linearGradient></defs>
+<rect width="600" height="600" fill="#f7f8fb"/><rect width="600" height="600" fill="url(#g)"/>
+<circle cx="300" cy="215" r="150" fill="#ffffff" stroke="hsl(342 55% 38%)" stroke-opacity="0.35" stroke-width="3"/>
+<g transform="translate(204 119) scale(8)" fill="none" stroke="hsl(342 55% 38%)" stroke-width="1.25" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h.01"/><path d="M7 5h.01"/><path d="M11 7h.01"/><path d="M3 7h.01"/><path d="M7 9h.01"/><path d="M3 11h.01"/><rect width="4" height="4" x="15" y="5"/><path d="m19 9 2 2v10c0 .6-.4 1-1 1h-6c-.6 0-1-.4-1-1V11l2-2"/><path d="m13 14 8-2"/><path d="m13 19 8-2"/></g>
+<text x="300" y="410" text-anchor="middle" font-size="22" letter-spacing="3" font-weight="700" fill="hsl(342 55% 38%)">OUD &amp; OAK</text>
+<text x="300" y="468" text-anchor="middle" font-size="30" font-weight="700" fill="#1b1f2a">Perfume Gift Set</text>
+<text x="300" y="510" text-anchor="middle" font-size="22" fill="#4a5163">Musk</text>
+<text x="300" y="578" text-anchor="middle" font-size="16" fill="#7a8196">Fragrance - ShopNGo Mall</text>
+</svg>

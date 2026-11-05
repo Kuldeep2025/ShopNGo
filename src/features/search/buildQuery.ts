@@ -20,7 +20,8 @@ export function buildSearchWhere(q: SearchQuery): Prisma.ListingWhereInput {
   }
 
   if (q.category) {
-    where.category = { slug: q.category };
+    // A parent category also matches everything in its sub-categories.
+    where.category = { OR: [{ slug: q.category }, { parent: { slug: q.category } }] };
   }
 
   if (q.type) {

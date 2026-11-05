@@ -56,10 +56,9 @@ export async function getSessionUser(
   // Upsert internal user – idempotent
   const upserted = await prisma.user.upsert({
     where: { firebaseUid: decoded.uid },
+    // Only the email is refreshed: name and photo are the member's own edits after sign-up.
     update: {
       email: decoded.email,
-      displayName: decoded.name ?? undefined,
-      photoUrl: decoded.picture ?? undefined,
     },
     create: {
       firebaseUid: decoded.uid,

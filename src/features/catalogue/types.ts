@@ -67,6 +67,8 @@ export type PublicListingDTO = {
   } | null;
   media: unknown;
   attributes: unknown;
+  /** False only for physical items whose stock has run out. */
+  inStock?: boolean;
   createdAt: string;
 };
 

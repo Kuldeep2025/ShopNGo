@@ -59,49 +59,37 @@ export async function GET(req: NextRequest) {
     const orderBy = buildSearchOrderBy(q.sort);
     const limit = q.limit ?? 20;
 
-    let cursorClause: { createdAt: Date; id: string } | undefined;
+    // Pages are offset based so every sort order paginates correctly.
+    let offset = 0;
     if (q.cursor) {
-      try {
-        const [ts, id] = Buffer.from(q.cursor, "base64url")
-          .toString("utf8")
-          .split("|");
-        cursorClause = { createdAt: new Date(ts), id };
-      } catch {
-        return NextResponse.json({ error: "Invalid cursor" }, { status: 400 });
-      }
+      const decoded = Buffer.from(q.cursor, "base64url").toString("utf8");
+      const m = /^o:(\d{1,7})$/.exec(decoded);
+      if (!m) return NextResponse.json({ error: "Invalid cursor" }, { status: 400 });
+      offset = Number(m[1]);
     }
 
-    const listings = await prisma.listing.findMany({
-      where: {
-        ...where,
-        ...(cursorClause
-          ? {
-              OR: [
-                { createdAt: { lt: cursorClause.createdAt } },
-                {
-                  createdAt: cursorClause.createdAt,
-                  id: { lt: cursorClause.id },
-                },
-              ],
-            }
-          : {}),
-      },
-      include: {
-        store: {
-          select: { id: true, name: true, slug: true, isActive: true },
+    const [listings, total] = await Promise.all([
+      prisma.listing.findMany({
+        where,
+        include: {
+          store: {
+            select: { id: true, name: true, slug: true, isActive: true },
+          },
+          category: { select: { id: true, name: true, slug: true } },
         },
-        category: { select: { id: true, name: true, slug: true } },
-      },
-      orderBy: [orderBy, { id: "desc" }],
-      take: limit + 1,
-    });
+        orderBy: [orderBy, { id: "desc" }],
+        skip: offset,
+        take: limit + 1,
+      }),
+      prisma.listing.count({ where }),
+    ]);
 
     const visible = filterPublicListings(listings);
     const hasMore = visible.length > limit;
     const page = hasMore ? visible.slice(0, limit) : visible;
 
     // If DB is empty, show demo so the UI is not blank
-    if (page.length === 0 && !q.q && !q.type && !q.minPrice && !q.maxPrice) {
+    if (page.length === 0 && offset === 0 && total === 0 && !q.q && !q.type && !q.category && q.minPrice === undefined && q.maxPrice === undefined) {
       const demo = searchDemoListings({});
       return NextResponse.json({
         listings: demo,
@@ -111,22 +99,17 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    let nextCursor: string | null = null;
-    if (hasMore && page.length > 0) {
-      const last = page[page.length - 1];
-      nextCursor = Buffer.from(
-        `${last.createdAt.toISOString()}|${last.id}`,
-        "utf8"
-      ).toString("base64url");
-    }
+    const nextCursor = hasMore ? Buffer.from(`o:${offset + limit}`, "utf8").toString("base64url") : null;
 
     return NextResponse.json({
       listings: page.map(toPublicListingDTO),
       nextCursor,
       count: page.length,
+      total,
       source: "database",
     });
-  } catch {
+  } catch (err) {
+    console.error("search failed:", err instanceof Error ? err.message.slice(-300) : err);
     const listings = searchDemoListings({
       q: q.q,
       type: q.type,

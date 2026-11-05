@@ -11,9 +11,10 @@ type Props = {
   productTitle: string;
   /** Digital items and services are not bought in bulk, but quantity stays editable in the cart. */
   size?: "sm" | "md" | "lg";
+  outOfStock?: boolean;
 };
 
-export function AddToCartButton({ listingId, productTitle, size = "lg" }: Props) {
+export function AddToCartButton({ listingId, productTitle, size = "lg", outOfStock = false }: Props) {
   const { appUser, loading, getIdToken } = useAuth();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
@@ -36,6 +37,14 @@ export function AddToCartButton({ listingId, productTitle, size = "lg" }: Props)
     } else {
       setMessage({ kind: "error", text: res.data.error ?? "Could not add this item. Please try again." });
     }
+  }
+
+  if (outOfStock) {
+    return (
+      <Button size={size} disabled>
+        Out of stock
+      </Button>
+    );
   }
 
   if (loading) {

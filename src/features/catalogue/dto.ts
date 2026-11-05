@@ -16,6 +16,7 @@ type ListingRecord = {
   status: string;
   media: unknown;
   attributes: unknown;
+  stock?: number | null;
   createdAt: Date | string;
   store: {
     id: string;
@@ -56,6 +57,7 @@ export function toPublicListingDTO(record: ListingRecord): PublicListingDTO {
       : null,
     media: record.media,
     attributes: record.attributes,
+    inStock: record.productType !== "PHYSICAL" || record.stock == null || record.stock > 0,
     createdAt:
       typeof record.createdAt === "string"
         ? record.createdAt

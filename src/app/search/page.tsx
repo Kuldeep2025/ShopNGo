@@ -8,10 +8,11 @@ import { cn } from "@/lib/cn";
 import {
   PRODUCT_TYPES,
   PRODUCT_TYPE_LABELS,
+  type PublicCategoryDTO,
   type PublicListingDTO,
 } from "@/features/catalogue";
 import { pickArtworkVariant } from "@/features/cinematic/layoutEngine";
-import { getListingImageUrl } from "@/features/catalogue/media";
+import { getListingImageUrl, getListingImageAlt } from "@/features/catalogue/media";
 
 type VoiceResultEvent = { results: ArrayLike<ArrayLike<{ transcript: string }>> };
 type VoiceRecognition = {
@@ -34,6 +35,10 @@ function SearchContent() {
   const [minPrice, setMinPrice] = useState(searchParams.get("minPrice") ?? "");
   const [maxPrice, setMaxPrice] = useState(searchParams.get("maxPrice") ?? "");
   const [sort, setSort] = useState(searchParams.get("sort") ?? "newest");
+  const [category, setCategory] = useState(searchParams.get("category") ?? "");
+  const [categories, setCategories] = useState<PublicCategoryDTO[]>([]);
+  const [total, setTotal] = useState<number | null>(null);
+  const appliedQuery = searchParams.toString();
 
   const [listings, setListings] = useState<PublicListingDTO[]>([]);
   const [loading, setLoading] = useState(false);
@@ -127,12 +132,7 @@ function SearchContent() {
     async (cursor?: string) => {
       setLoading(true);
       setError(null);
-      const params = new URLSearchParams();
-      if (q) params.set("q", q);
-      if (type) params.set("type", type);
-      if (minPrice) params.set("minPrice", minPrice);
-      if (maxPrice) params.set("maxPrice", maxPrice);
-      if (sort) params.set("sort", sort);
+      const params = new URLSearchParams(appliedQuery);
       if (cursor) params.set("cursor", cursor);
 
       try {
@@ -141,6 +141,8 @@ function SearchContent() {
         if (!res.ok) {
           setError(data.error ?? "Search failed");
           setListings([]);
+          setTotal(null);
+          setNextCursor(null);
           return;
         }
         if (cursor) {
@@ -148,6 +150,7 @@ function SearchContent() {
         } else {
           setListings(data.listings ?? []);
         }
+        setTotal(typeof data.total === "number" ? data.total : null);
         setNextCursor(data.nextCursor ?? null);
         setSearched(true);
       } catch {
@@ -156,24 +159,41 @@ function SearchContent() {
         setLoading(false);
       }
     },
-    [q, type, minPrice, maxPrice, sort]
+    [appliedQuery]
   );
 
+  // Run the search whenever the address (filters) changes, including back/forward.
   useEffect(() => {
+    const p = new URLSearchParams(appliedQuery);
+    setQ(p.get("q") ?? "");
+    setType(p.get("type") ?? "");
+    setMinPrice(p.get("minPrice") ?? "");
+    setMaxPrice(p.get("maxPrice") ?? "");
+    setSort(p.get("sort") ?? "newest");
+    setCategory(p.get("category") ?? "");
     runSearch();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appliedQuery, runSearch]);
+
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => setCategories(d?.categories ?? []))
+      .catch(() => undefined);
   }, []);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setShowSuggest(false);
     const params = new URLSearchParams();
-    if (q) params.set("q", q);
+    if (q.trim()) params.set("q", q.trim());
     if (type) params.set("type", type);
+    if (category) params.set("category", category);
     if (minPrice) params.set("minPrice", minPrice);
     if (maxPrice) params.set("maxPrice", maxPrice);
-    if (sort) params.set("sort", sort);
-    router.push(`/search?${params.toString()}`);
-    runSearch();
+    if (sort && sort !== "newest") params.set("sort", sort);
+    const next = params.toString();
+    if (next === appliedQuery) runSearch();
+    else router.push(next ? `/search?${next}` : "/search");
   }
 
   return (
@@ -258,6 +278,29 @@ function SearchContent() {
                 ))}
               </ul>
             )}
+          </div>
+          <div>
+            <label htmlFor="category" className="block text-sm font-medium text-gray-700">
+              Category
+            </label>
+            <select
+              id="category"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="mt-1 block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-2 focus:ring-teal-600"
+            >
+              <option value="">All categories</option>
+              {categories.map((c) => (
+                <optgroup key={c.id} label={c.name}>
+                  <option value={c.slug}>All {c.name}</option>
+                  {(c.children ?? []).map((child) => (
+                    <option key={child.id} value={child.slug}>
+                      {child.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
           </div>
           <div>
             <label htmlFor="type" className="block text-sm font-medium text-gray-700">
@@ -359,8 +402,9 @@ function SearchContent() {
         ) : listings.length > 0 ? (
           <>
             <p className="mb-4 text-sm text-gray-500">
-              {listings.length} result{listings.length !== 1 ? "s" : ""}
-              {nextCursor ? "+" : ""}
+              {total !== null
+                ? `Showing ${listings.length} of ${total} result${total !== 1 ? "s" : ""}`
+                : `${listings.length} result${listings.length !== 1 ? "s" : ""}${nextCursor ? "+" : ""}`}
             </p>
             <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {listings.map((l) => {
@@ -372,12 +416,12 @@ function SearchContent() {
                       href={`/products/${l.slug}`}
                       className="group flex h-full flex-col rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-teal-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600"
                     >
-                      <div className={`mb-3 flex aspect-[4/3] items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br ${artwork.gradient} text-5xl text-white transition group-hover:brightness-110`} aria-hidden="true">
+                      <div className={`mb-3 flex aspect-[4/3] items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br ${artwork.gradient} text-5xl text-white transition group-hover:brightness-110`} aria-hidden={imageUrl ? undefined : "true"}>
                         {imageUrl ? (
                           /* eslint-disable-next-line @next/next/no-img-element */
                           <img
                             src={imageUrl}
-                            alt=""
+                            alt={getListingImageAlt(l)}
                             loading="lazy"
                             className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
                           />
@@ -395,6 +439,9 @@ function SearchContent() {
                       <p className="mt-3 text-lg font-semibold text-teal-800">
                         {l.currency === "INR" ? "₹" : l.currency} {l.price}
                       </p>
+                      {l.inStock === false && (
+                        <p className="mt-1 text-sm font-medium text-red-700">Out of stock</p>
+                      )}
                     </Link>
                   </li>
                 );

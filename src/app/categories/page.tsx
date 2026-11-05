@@ -65,7 +65,7 @@ export default async function CategoriesPage() {
             <li key={cat.id}>
               <div className="h-full rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition hover:border-teal-200 hover:shadow-md">
                 <Link
-                  href={`/search?q=${encodeURIComponent(cat.name)}`}
+                  href={`/search?category=${encodeURIComponent(cat.slug)}`}
                   className="text-lg font-semibold text-gray-900 hover:text-teal-800"
                 >
                   {cat.name}
@@ -75,7 +75,7 @@ export default async function CategoriesPage() {
                     {cat.children.map((child) => (
                       <li key={child.id}>
                         <Link
-                          href={`/search?q=${encodeURIComponent(child.name)}`}
+                          href={`/search?category=${encodeURIComponent(child.slug)}`}
                           className="inline-flex rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-700 transition hover:bg-teal-50 hover:text-teal-800"
                         >
                           {child.name}

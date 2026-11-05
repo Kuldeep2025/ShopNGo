@@ -15,12 +15,14 @@ type Props = { params: Promise<{ slug: string }> };
 async function getProduct(slug: string): Promise<{
   listing: PublicListingDTO;
   store: { id: string; name: string; slug: string; description: string | null };
+  stock: number | null;
 } | null> {
   if (!isDatabaseConfigured() || !prisma) {
     const demo = getDemoListingBySlug(slug);
     return demo ? {
       listing: demo,
       store: { ...demo.store, description: null },
+      stock: null,
     } : null;
   }
   try {
@@ -40,13 +42,14 @@ async function getProduct(slug: string): Promise<{
           slug: listing.store.slug,
           description: listing.store.description,
         },
+        stock: listing.productType === "PHYSICAL" ? listing.stock : null,
       };
     }
     const demo = getDemoListingBySlug(slug);
-    return demo ? { listing: demo, store: { ...demo.store, description: null } } : null;
+    return demo ? { listing: demo, store: { ...demo.store, description: null }, stock: null } : null;
   } catch {
     const demo = getDemoListingBySlug(slug);
-    return demo ? { listing: demo, store: { ...demo.store, description: null } } : null;
+    return demo ? { listing: demo, store: { ...demo.store, description: null }, stock: null } : null;
   }
 }
 
@@ -68,7 +71,9 @@ export default async function ProductPage({ params }: Props) {
     notFound();
   }
 
-  const { listing, store } = data;
+  const { listing, store, stock } = data;
+  const brand = (listing.attributes as { brand?: unknown } | null)?.brand;
+  const outOfStock = stock !== null && stock <= 0;
   const typeLabel =
     PRODUCT_TYPE_LABELS[listing.productType] ?? listing.productType;
   const priceLabel =
@@ -101,8 +106,7 @@ export default async function ProductPage({ params }: Props) {
       <div className="grid gap-10 lg:grid-cols-2">
         <div
           className={`flex aspect-square items-center justify-center rounded-2xl bg-gradient-to-br ${artwork.gradient} text-7xl text-white shadow-inner`}
-          role="img"
-          aria-label={getListingImageAlt(listing)}
+          {...(imageUrl ? {} : { role: "img", "aria-label": getListingImageAlt(listing) })}
         >
           {imageUrl ? (
             /* eslint-disable-next-line @next/next/no-img-element */
@@ -126,7 +130,13 @@ export default async function ProductPage({ params }: Props) {
           <h1 className="mt-4 text-2xl font-bold text-gray-900 sm:text-3xl">
             {listing.title}
           </h1>
+          {typeof brand === "string" && <p className="mt-2 text-sm text-gray-600">Brand: {brand}</p>}
           <p className="mt-4 text-3xl font-semibold text-teal-800">{priceLabel}</p>
+          {stock !== null && (
+            <p className={`mt-2 text-sm font-medium ${outOfStock ? "text-red-700" : stock <= 5 ? "text-amber-800" : "text-emerald-800"}`}>
+              {outOfStock ? "Out of stock" : stock <= 5 ? `Only ${stock} left in stock` : "In stock"}
+            </p>
+          )}
 
           {listing.description && (
             <div className="mt-8">
@@ -153,7 +163,7 @@ export default async function ProductPage({ params }: Props) {
           </div>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <AddToCartButton listingId={listing.id} productTitle={listing.title} />
+            <AddToCartButton listingId={listing.id} productTitle={listing.title} outOfStock={outOfStock} />
             <Link href={`/stores/${store.slug}`}>
               <Button size="lg" variant="outline">
                 View store
