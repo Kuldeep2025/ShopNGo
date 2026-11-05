@@ -6,6 +6,20 @@
 import { callAI } from "@/lib/providers/ai";
 import { getServerEnv } from "@/lib/env";
 
+function summariseEvidence(evidence: string[]): string {
+  if (evidence.length === 0) {
+    return "I could not find a matching product. Try the search page with different words.";
+  }
+  const lines = evidence.map((e) => {
+    const get = (k: string) => e.split("\n").find((l) => l.startsWith(`${k}:`))?.slice(k.length + 1).trim();
+    const title = get("Title") ?? "Product";
+    const price = get("Price");
+    const store = get("Store");
+    return `${title}${price ? `, ${price}` : ""}${store ? `, sold by ${store}` : ""}`;
+  });
+  return `Here is what the catalogue has: ${lines.join("; ")}.`;
+}
+
 export async function groundedAsk(question: string, contextSnippets: string[]): Promise<{
   answer: string;
   evidence: string[];
@@ -16,7 +30,7 @@ export async function groundedAsk(question: string, contextSnippets: string[]): 
 
   if (!env.AI_ENABLED || env.AI_PROVIDER === "off") {
     return {
-      answer: "AI is currently disabled. Please use the search page to find products.",
+      answer: summariseEvidence(evidence),
       evidence,
       source: "fallback",
     };

@@ -83,10 +83,19 @@ export async function POST(req: NextRequest) {
           where: {
             status: "APPROVED",
             store: { isActive: true },
-            OR: [
-              { title: { contains: parsed.data.question.slice(0, 50), mode: "insensitive" } },
-              { description: { contains: parsed.data.question.slice(0, 50), mode: "insensitive" } },
-            ],
+            OR: (() => {
+              const stop = new Set(["the", "and", "for", "are", "how", "much", "what", "which", "with", "have", "you", "your", "does", "any"]);
+              const words = parsed.data.question
+                .toLowerCase()
+                .split(/[^a-z0-9]+/)
+                .filter((t) => t.length >= 3 && !stop.has(t))
+                .slice(0, 6);
+              const terms = words.length ? words : [parsed.data.question.slice(0, 50)];
+              return terms.flatMap((w) => [
+                { title: { contains: w, mode: "insensitive" as const } },
+                { description: { contains: w, mode: "insensitive" as const } },
+              ]);
+            })(),
           },
           include: { store: true },
           take: 5,
