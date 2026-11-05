@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Copy } from "@/features/copy/Copy";
 import Link from "next/link";
 import { useAuth } from "@/features/identity/AuthProvider";
 import { Alert, Badge, Button, Spinner } from "@/components/ui";
@@ -201,7 +202,7 @@ export default function DeliveryDashboardPage() {
 
       <section aria-labelledby="active-h" className="mt-8">
         <h2 id="active-h" className="text-lg font-semibold text-gray-900 dark:text-zinc-100">My active deliveries ({active.length})</h2>
-        {active.length === 0 && <p className="mt-2 text-sm text-gray-600 dark:text-zinc-400">Nothing on the way right now.</p>}
+        {active.length === 0 && <p className="mt-2 text-sm text-gray-600 dark:text-zinc-400"><Copy id="delivery.active.empty" /></p>}
         <ul className="mt-3 space-y-4">
           {active.map((d) => (
             <li key={d.id} className="rounded-xl border border-gray-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
@@ -250,7 +251,7 @@ export default function DeliveryDashboardPage() {
       <section aria-labelledby="open-h" className="mt-8">
         <h2 id="open-h" className="text-lg font-semibold text-gray-900 dark:text-zinc-100">Open orders ({jobs.available.length})</h2>
         {!online && <p className="mt-2 text-sm text-gray-600 dark:text-zinc-400">Go online to see orders waiting for a partner.</p>}
-        {online && jobs.available.length === 0 && <p className="mt-2 text-sm text-gray-600 dark:text-zinc-400">No open orders right now. This list refreshes by itself.</p>}
+        {online && jobs.available.length === 0 && <p className="mt-2 text-sm text-gray-600 dark:text-zinc-400"><Copy id="delivery.available.empty" /></p>}
         <ul className="mt-3 space-y-3">
           {jobs.available.map((o) => (
             <li key={o.orderId} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Copy } from "@/features/copy/Copy";
 import Link from "next/link";
 import { useAuth } from "@/features/identity/AuthProvider";
 import { Button, FormField, Input, Alert, Badge, Spinner } from "@/components/ui";
@@ -98,8 +99,7 @@ export default function DeliveryApplyPage() {
     <div className="mx-auto max-w-lg px-6 py-12">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-zinc-100">Become a delivery partner</h1>
       <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">
-        Deliver ShopNGo orders near you and share your live location with customers. Anyone with an
-        account can apply. Your location is shared only while you are online.
+        <Copy id="delivery.apply.intro" />
       </p>
 
       {status !== "NONE" && (
@@ -122,7 +122,7 @@ export default function DeliveryApplyPage() {
       )}
       {pending && (
         <Alert variant="info" title="Under review" className="mt-6">
-          A moderator is reviewing your application.
+          <Copy id="delivery.apply.pending" />
         </Alert>
       )}
 

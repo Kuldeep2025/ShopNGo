@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Copy } from "@/features/copy/Copy";
 import { toPublicCategoryDTO, type PublicCategoryDTO } from "@/features/catalogue";
 import { DEMO_CATEGORIES } from "@/lib/demo-data";
 import { prisma, isDatabaseConfigured } from "@/lib/db";
@@ -40,7 +41,7 @@ export default async function CategoriesPage() {
           Categories
         </h1>
         <p className="mt-2 text-gray-600">
-          Explore products by category and find what you need faster.
+          <Copy id="categories.intro" />
         </p>
       </div>
 

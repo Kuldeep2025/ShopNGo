@@ -7,6 +7,8 @@ import { useAuth } from "@/features/identity/AuthProvider";
 import { PRODUCT_TYPE_LABELS, type PublicListingDTO } from "@/features/catalogue";
 import { getListingImageUrl, getListingImageAlt } from "@/features/catalogue/media";
 import { RotatingTagline } from "@/features/brand/RotatingTagline";
+import { Copy } from "@/features/copy/Copy";
+import type { CopyId } from "@/features/copy/variants";
 import {
   computeLayout,
   persistLayout,
@@ -217,8 +219,7 @@ export function CinematicHome({
                       {hero ? hero.title : "Shop smarter. Buy with confidence."}
                     </h1>
                     <p className="mt-3 max-w-lg text-sm text-zinc-400 sm:text-base">
-                      {hero?.description?.slice(0, 120) ??
-                        "Discover, compare, and track — one marketplace for physical, digital, and service products."}
+                      {hero?.description?.slice(0, 120) ?? <Copy id="home.hero.fallbackSub" />}
                     </p>
                     <div className="mt-6 flex flex-wrap gap-3">
                       <Link href={hero ? `/products/${hero.slug}` : "/search"}>
@@ -298,33 +299,23 @@ export function CinematicHome({
             return (
               <section key={row.id} className="mx-auto mb-12 max-w-6xl px-4 sm:px-6">
                 <h2 className="mb-6 text-lg font-semibold text-zinc-100 sm:text-xl">
-                  Why ShopNGo
+                  <Copy id="home.why.title" />
                 </h2>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                  {[
-                    {
-                      title: "Clear answers",
-                      body: "Product help grounded in real listing details.",
-                    },
-                    {
-                      title: "Compare options",
-                      body: "Price, type, and store side by side.",
-                    },
-                    {
-                      title: "Verified sellers",
-                      body: "Stores reviewed before they go live.",
-                    },
-                    {
-                      title: "Order control",
-                      body: "Track, cancel, and update when rules allow.",
-                    },
-                  ].map((item) => (
+                  {([
+                    { title: "Clear answers", body: "home.why.clear" },
+                    { title: "Compare options", body: "home.why.compare" },
+                    { title: "Verified sellers", body: "home.why.verified" },
+                    { title: "Order control", body: "home.why.order" },
+                  ] as { title: string; body: CopyId }[]).map((item) => (
                     <div
                       key={item.title}
                       className="rounded-xl border border-zinc-800 bg-zinc-900/60 p-5 transition hover:border-teal-800/50"
                     >
                       <h3 className="font-semibold text-zinc-100">{item.title}</h3>
-                      <p className="mt-2 text-sm text-zinc-500">{item.body}</p>
+                      <p className="mt-2 min-h-[2.5rem] text-sm text-zinc-500">
+                        <Copy id={item.body} />
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -335,17 +326,17 @@ export function CinematicHome({
             return (
               <section key={row.id} className="mx-auto mb-12 max-w-6xl px-4 sm:px-6">
                 <h2 className="mb-6 text-lg font-semibold text-zinc-100 sm:text-xl">
-                  From search to delivery
+                  <Copy id="home.journey.title" />
                 </h2>
                 <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {[
-                    { step: "01", title: "Discover", text: "Search and filter what you need." },
-                    { step: "02", title: "Understand", text: "Read details and store info." },
-                    { step: "03", title: "Compare", text: "Check options side by side." },
-                    { step: "04", title: "Buy", text: "Cart, address, checkout." },
-                    { step: "05", title: "Track", text: "Follow status end to end." },
-                    { step: "06", title: "Receive", text: "Delivery or digital access." },
-                  ].map((item) => (
+                  {([
+                    { step: "01", title: "Discover", text: "home.journey.discover" },
+                    { step: "02", title: "Understand", text: "home.journey.understand" },
+                    { step: "03", title: "Compare", text: "home.journey.compare" },
+                    { step: "04", title: "Buy", text: "home.journey.buy" },
+                    { step: "05", title: "Track", text: "home.journey.track" },
+                    { step: "06", title: "Receive", text: "home.journey.receive" },
+                  ] as { step: string; title: string; text: CopyId }[]).map((item) => (
                     <li
                       key={item.step}
                       className="rounded-xl border border-zinc-800 bg-zinc-900/40 p-4"
@@ -354,7 +345,9 @@ export function CinematicHome({
                         {item.step}
                       </span>
                       <h3 className="mt-1 font-semibold text-zinc-100">{item.title}</h3>
-                      <p className="mt-1 text-sm text-zinc-500">{item.text}</p>
+                      <p className="mt-1 min-h-[2.5rem] text-sm text-zinc-500">
+                        <Copy id={item.text} />
+                      </p>
                     </li>
                   ))}
                 </ol>
@@ -369,11 +362,10 @@ export function CinematicHome({
               >
                 <div className="mx-auto max-w-6xl px-4 py-14 text-center sm:px-6">
                   <h2 className="text-2xl font-bold text-white sm:text-3xl">
-                    Ready to explore?
+                    <Copy id="home.cta.title" />
                   </h2>
                   <p className="mx-auto mt-3 max-w-lg text-zinc-400">
-                    Browse the catalogue or create an account to save addresses
-                    and place orders.
+                    <Copy id="home.cta.body" />
                   </p>
                   <div className="mt-8 flex flex-wrap justify-center gap-3">
                     <Link href="/search">

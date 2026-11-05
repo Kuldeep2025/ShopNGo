@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Copy } from "@/features/copy/Copy";
 import Link from "next/link";
 import { useAuth } from "@/features/identity/AuthProvider";
 import {
@@ -268,7 +269,7 @@ export default function SellerListingsPage() {
 
       <ul className="mt-8 space-y-3">
         {listings.length === 0 && (
-          <p className="text-sm text-gray-500">No listings yet.</p>
+          <p className="text-sm text-gray-500"><Copy id="seller.listings.empty" /></p>
         )}
         {listings.map((l) => (
           <li

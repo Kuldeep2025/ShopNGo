@@ -1,6 +1,7 @@
 "use client";
 
 import { SignInRequired } from "@/components/feedback/SignInRequired";
+import { Copy } from "@/features/copy/Copy";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/features/identity/AuthProvider";
@@ -329,7 +330,7 @@ export default function AccountPage() {
 
         <ul className="mt-4 space-y-3">
           {addresses.length === 0 && (
-            <p className="text-sm text-gray-500">No addresses saved yet.</p>
+            <p className="text-sm text-gray-500"><Copy id="account.addresses.empty" /></p>
           )}
           {addresses.map((a) => (
             <li

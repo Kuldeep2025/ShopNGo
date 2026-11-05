@@ -3,6 +3,8 @@ import { DEMO_NOTICE } from "@/features/legal/demoNotice";
 import { FooterAuthLink } from "@/components/layout/FooterAuthLink";
 import { CopyrightYear } from "@/components/layout/CopyrightYear";
 import { AnalyticsPreferencesButton } from "@/components/analytics/FirebaseAnalytics";
+import { LogoMark } from "@/features/brand/logos";
+import { Copy } from "@/features/copy/Copy";
 
 export function Footer() {
   return (
@@ -11,20 +13,16 @@ export function Footer() {
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div className="sm:col-span-2 lg:col-span-1">
             <div className="flex items-center gap-2.5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/icon-192.png"
-                alt="ShopNGo logo"
-                width={36}
-                height={36}
-                className="h-9 w-9 rounded-xl shadow-md"
-              />
+              <LogoMark variant={0} className="h-9 w-9 rounded-xl shadow-md" />
               <span className="font-display text-lg font-bold text-teal-900 dark:text-teal-300">
                 Shop<span className="text-teal-600">NGo</span>
               </span>
             </div>
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-gray-600 dark:text-zinc-400">
               Discover. Understand. Compare. Buy. Track.
+            </p>
+            <p className="mt-2 max-w-xs text-sm leading-relaxed text-gray-600 dark:text-zinc-400 min-h-[4.5rem]">
+              <Copy id="footer.about" />
             </p>
             {/* Trust badges */}
             <ul className="mt-5 flex flex-wrap gap-2" aria-label="Trust signals">
@@ -110,9 +108,9 @@ export function Footer() {
           </p>
           <p className="mt-2">
             © <CopyrightYear initialYear={new Date().getFullYear()} /> ShopNGo. Built by Kuldeep Behera, Pankaj Gupta and
-          <p className="mt-1">{DEMO_NOTICE.footer}</p>
             Jaskaran Singh. Academic minor project, final year.
           </p>
+          <p className="mt-1">{DEMO_NOTICE.footer}</p>
           <div className="mt-1">
             <AnalyticsPreferencesButton />
           </div>

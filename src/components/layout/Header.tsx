@@ -7,6 +7,7 @@ import { useAuth } from "@/features/identity/AuthProvider";
 import { useTheme } from "@/features/theme/ThemeProvider";
 import { ThemeSwitcher } from "@/components/layout/ThemeSwitcher";
 import { Button } from "@/components/ui";
+import { RotatingLogo } from "@/features/brand/RotatingLogo";
 
 const navLinks = [
   { href: "/search", label: "Search" },
@@ -36,14 +37,7 @@ export function Header() {
           href="/"
           className="flex shrink-0 items-center gap-2.5 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 focus-visible:ring-offset-2"
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/icon-192.png"
-            alt="ShopNGo logo"
-            width={40}
-            height={40}
-            className="h-9 w-9 rounded-xl shadow-md shadow-teal-800/20 sm:h-10 sm:w-10"
-          />
+          <RotatingLogo />
           <span className="font-display text-lg font-bold tracking-tight text-teal-900 dark:text-teal-300 sm:text-xl">
             Shop<span className="text-teal-600 dark:text-teal-400">NGo</span>
           </span>

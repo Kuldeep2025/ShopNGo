@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { Copy } from "@/features/copy/Copy";
 import { Button, Alert } from "@/components/ui";
 
 export default function GlobalError({
@@ -18,7 +19,7 @@ export default function GlobalError({
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center gap-6 px-6 text-center">
       <Alert variant="error" title="Something went wrong">
-        An unexpected error occurred. You can try again or return home.
+        <Copy id="error.body" />
       </Alert>
       <div className="flex flex-wrap justify-center gap-3">
         <Button onClick={reset}>Try again</Button>

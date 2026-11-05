@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Copy } from "@/features/copy/Copy";
 import Link from "next/link";
 import { useAuth } from "@/features/identity/AuthProvider";
 import { Alert, Badge, Button, Spinner } from "@/components/ui";
@@ -93,7 +94,7 @@ export default function SellerOrdersPage() {
         </Alert>
       )}
       {orders.length === 0 ? (
-        <p className="mt-8 text-gray-500">No orders yet.</p>
+        <p className="mt-8 text-gray-500"><Copy id="orders.empty" /></p>
       ) : (
         <ul className="mt-6 space-y-4">
           {orders.map((o) => {

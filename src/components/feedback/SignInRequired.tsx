@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@/features/identity/AuthProvider";
 import { Button } from "@/components/ui";
+import { Copy } from "@/features/copy/Copy";
 
 type Props = {
   title?: string;
@@ -12,7 +13,7 @@ type Props = {
 
 export function SignInRequired({
   title = "Sign in required",
-  message = "Sign in to continue. Your cart, orders, and saved addresses stay with your account.",
+  message,
   className = "",
 }: Props) {
   const { firebaseUser, refreshAppUser } = useAuth();
@@ -57,7 +58,7 @@ export function SignInRequired({
       </div>
       <h1 className="mt-5 text-xl font-bold text-gray-900 sm:text-2xl">{title}</h1>
       <p className="mt-2 text-sm leading-relaxed text-gray-600 sm:text-base">
-        {message}
+        {message ?? <Copy id="signin.required.message" />}
       </p>
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         <Link href="/auth/sign-in">

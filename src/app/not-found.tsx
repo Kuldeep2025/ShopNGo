@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Copy } from "@/features/copy/Copy";
 import { Button } from "@/components/ui";
 
 export default function NotFound() {
@@ -8,7 +9,7 @@ export default function NotFound() {
       <div className="space-y-2">
         <h1 className="text-xl font-semibold text-gray-900">Page not found</h1>
         <p className="text-sm text-gray-600">
-          This page does not exist or the product is no longer available.
+          <Copy id="notFound.body" />
         </p>
       </div>
       <div className="flex flex-wrap justify-center gap-3">

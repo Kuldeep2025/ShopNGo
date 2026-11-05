@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { Copy } from "@/features/copy/Copy";
 import Link from "next/link";
 import { useAuth } from "@/features/identity/AuthProvider";
 import { Button, Alert, Spinner, Badge } from "@/components/ui";
@@ -117,7 +118,7 @@ export default function CartPage() {
     <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
       <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Your cart</h1>
       <p className="mt-1 text-gray-600">
-        Prices and availability are confirmed when you review the order.
+        <Copy id="cart.intro" />
       </p>
 
       {error && (
@@ -138,9 +139,9 @@ export default function CartPage() {
 
       {items.length === 0 ? (
         <div className="mt-10 rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-6 py-16 text-center">
-          <p className="text-lg font-medium text-gray-900">Your cart is empty</p>
+          <p className="text-lg font-medium text-gray-900"><Copy id="cart.empty.title" /></p>
           <p className="mt-2 text-sm text-gray-600">
-            Search for products and add them when you are ready.
+            <Copy id="cart.empty.hint" />
           </p>
           <Link href="/search" className="mt-6 inline-block">
             <Button>Browse products</Button>

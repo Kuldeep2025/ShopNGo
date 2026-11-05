@@ -1,6 +1,7 @@
 "use client";
 
 import { SignInRequired } from "@/components/feedback/SignInRequired";
+import { Copy } from "@/features/copy/Copy";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/features/identity/AuthProvider";
@@ -106,7 +107,7 @@ export default function SellerApplyPage() {
     <div className="mx-auto max-w-lg px-6 py-12">
       <h1 className="text-2xl font-bold text-gray-900">Become a Seller</h1>
       <p className="mt-1 text-sm text-gray-500">
-        Apply to open a store on ShopNGo. A moderator will review your application.
+        <Copy id="seller.apply.intro" />
       </p>
 
       {status !== "NONE" && (

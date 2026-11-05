@@ -15,6 +15,7 @@ import { pickArtworkVariant } from "@/features/cinematic/layoutEngine";
 import { getListingImageUrl, getListingImageAlt } from "@/features/catalogue/media";
 import { useAuth } from "@/features/identity/AuthProvider";
 import { track } from "@/features/recommendations/track";
+import { Copy } from "@/features/copy/Copy";
 
 type VoiceResultEvent = { results: ArrayLike<ArrayLike<{ transcript: string }>> };
 type VoiceRecognition = {
@@ -208,7 +209,7 @@ function SearchContent() {
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Search</h1>
         <p className="mt-1 text-gray-600">
-          Find products by name, type, or price range.
+          <Copy id="search.intro" />
         </p>
       </div>
 
@@ -398,9 +399,9 @@ function SearchContent() {
           </div>
         ) : searched && listings.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-gray-200 bg-gray-50 px-6 py-16 text-center">
-            <p className="text-lg font-medium text-gray-900">No products found</p>
+            <p className="text-lg font-medium text-gray-900"><Copy id="search.empty.title" /></p>
             <p className="mt-2 text-sm text-gray-600">
-              Try different keywords or clear some filters.
+              <Copy id="search.empty.hint" />
             </p>
             <Link href="/categories" className="mt-6 inline-block">
               <Button variant="outline">Browse categories</Button>

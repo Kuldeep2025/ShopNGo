@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Copy } from "@/features/copy/Copy";
 import Link from "next/link";
 import { useAuth } from "@/features/identity/AuthProvider";
 import { Badge, Spinner } from "@/components/ui";
@@ -65,7 +66,7 @@ export default function OrdersPage() {
     <div className="mx-auto max-w-2xl px-6 py-12">
       <h1 className="text-2xl font-bold text-gray-900">My Orders</h1>
       {orders.length === 0 ? (
-        <p className="mt-8 text-sm text-gray-500">No orders yet.</p>
+        <p className="mt-8 text-sm text-gray-500"><Copy id="orders.empty" /></p>
       ) : (
         <ul className="mt-6 space-y-4">
           {orders.map((o) => (
