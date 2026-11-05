@@ -21,6 +21,17 @@ describe("language", () => {
   });
 });
 
+describe("directAnswer from comparison summaries", () => {
+  const sum = [
+    "Summary: Glyph Laptop Stand: only SoundHive Tech sells it, at Rs 409.\nx",
+    "Summary: Glyph Pure Business Laptop is sold by 2 stores. Cheapest: TechHub at Rs 42000, saving Rs 500 against the highest price.\nx",
+  ];
+  it("prefers the item that matches the asked noun and gives one answer", () => {
+    const a = directAnswer("what is the cheapest laptop?", sum);
+    expect(a).toBe("The cheapest is Glyph Pure Business Laptop at Rs 42000, from TechHub.");
+  });
+});
+
 describe("directAnswer", () => {
   it("answers cheapest with one product", () => {
     const a = directAnswer("what is the cheapest laptop?", ev);

@@ -107,10 +107,6 @@ export function directAnswer(question: string, evidence: string[], live?: string
   const lang = detectLanguage(question);
   const q = question.toLowerCase();
 
-  // Price comparison and review analysis evidence already holds the answer in one sentence.
-  const sums = evidence.map((e) => e.split("\n").find((l) => l.startsWith("Summary:"))?.slice(8).trim()).filter((x): x is string => Boolean(x));
-  if (sums.length > 0) return sums.slice(0, 3).join(" ");
-
   if (/who (built|made|created|developed)|developer|creator|\bteam\b|kisne|banaya|banai|banane|किसने|बनाया|डेवलपर/.test(q)) {
     return TXT.team[lang](TEAM.map((m) => `${m.name} (${m.role.split(",")[0]!.toLowerCase()})`).join(", "));
   }
@@ -121,6 +117,28 @@ export function directAnswer(question: string, evidence: string[], live?: string
     const names = line?.slice(7).split(/\),\s*/).map((s) => s.replace(/\s*\(\d+\)\.?$/, "").trim()).filter(Boolean).slice(0, 5);
     if (names?.length) return TXT.stores[lang](names.join(", "));
   }
+
+  // Price comparison summaries name the exact item and its cheapest store: use the best matching one.
+  const wantsPrice = /cheap|lowest|sasta|sasti|सस्ता|price|cost|kitna|kitne|daam|दाम|कीमत/.test(q);
+  if (wantsPrice && budgetFrom(question) === null) {
+    const toks = tokens(question);
+    const found: { name: string; store: string; amount: string; hit: boolean }[] = [];
+    for (const e of evidence) {
+      const line = e.split("\n").find((l) => l.startsWith("Summary:"));
+      const m =
+        line?.match(/^Summary: (.+?) is sold by \d+ stores\. Cheapest: (.+?) at Rs ([\d,.]+)/) ??
+        line?.match(/^Summary: (.+?): only (.+?) sells it, at Rs ([\d,.]+)/);
+      if (!m) continue;
+      const last = m[1]!.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).pop() ?? "";
+      found.push({ name: m[1]!, store: m[2]!, amount: `Rs ${m[3]}`, hit: toks.includes(last) });
+    }
+    const pick = found.find((f) => f.hit) ?? found[0];
+    if (pick) return (/cheap|lowest|sasta|sasti|सस्ता/.test(q) ? TXT.cheapest : TXT.one)[lang](pick.name, pick.amount, pick.store);
+  }
+
+  // Price comparison and review analysis evidence already holds the answer in one sentence.
+  const sums = evidence.map((e) => e.split("\n").find((l) => l.startsWith("Summary:"))?.slice(8).trim()).filter((x): x is string => Boolean(x));
+  if (sums.length > 0) return sums.slice(0, 2).join(" ");
 
   const items = parseItems(evidence, question);
   const budget = budgetFrom(question);
