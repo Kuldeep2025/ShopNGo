@@ -89,17 +89,27 @@ async function chatCompletion(params: {
 
 export type AIResult = { text: string; provider: "groq" | "openrouter" | "keyless" } | { error: string };
 
-const KEYLESS_URL = "https://text.pollinations.ai/openai";
-const KEYLESS_MODEL = "openai";
+// Keyless endpoints, tried in order. Both are OpenAI-compatible and need no account.
+// The free tiers are rate limited per IP, so they are best effort only.
+const KEYLESS_ENDPOINTS: Array<{ url: string; model: string; headers?: Record<string, string> }> = [
+  { url: "https://text.pollinations.ai/openai", model: "openai" },
+  { url: "https://api.llm7.io/v1/chat/completions", model: "DeepSeek-V4-Flash-0731", headers: { Authorization: "Bearer unused" } },
+  { url: "https://api.llm7.io/v1/chat/completions", model: "GLM-5.3-Flash", headers: { Authorization: "Bearer unused" } },
+];
 
-async function keylessCompletion(messages: ChatMessage[], maxTokens: number, timeoutMs: number): Promise<{ text: string } | { error: string }> {
+async function keylessCompletion(
+  ep: (typeof KEYLESS_ENDPOINTS)[number],
+  messages: ChatMessage[],
+  maxTokens: number,
+  timeoutMs: number
+): Promise<{ text: string } | { error: string }> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const res = await fetch(KEYLESS_URL, {
+    const res = await fetch(ep.url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ model: KEYLESS_MODEL, messages, max_tokens: maxTokens, temperature: 0.3, stream: false }),
+      headers: { "Content-Type": "application/json", ...(ep.headers ?? {}) },
+      body: JSON.stringify({ model: ep.model, messages, max_tokens: maxTokens, temperature: 0.3, stream: false }),
       signal: controller.signal,
     });
     if (!res.ok) return { error: `Keyless provider returned ${res.status}` };
@@ -182,9 +192,8 @@ export async function callAI(params: {
     errors.push(`openrouter: ${r.error}`);
   }
 
-  // Keyless provider: a second try because the free service can be busy.
-  for (let attempt = 0; attempt < 2; attempt++) {
-    const r = await keylessCompletion(messages, maxTokens, Math.max(timeoutMs, 25_000));
+  for (const ep of KEYLESS_ENDPOINTS) {
+    const r = await keylessCompletion(ep, messages, maxTokens, Math.max(timeoutMs, 20_000));
     if ("text" in r) return { text: r.text, provider: "keyless" };
     errors.push(`keyless: ${r.error}`);
   }
