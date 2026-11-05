@@ -100,6 +100,10 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-12 border-t border-gray-200/90 pt-6 text-center text-xs text-gray-500 dark:border-zinc-800 dark:text-zinc-500">
+          <p>
+            Built by Kuldeep Behera, Pankaj Gupta and Jaskaran Singh during their minor project, an academic project
+            developed during the final year. <Link href="/about" className="underline hover:text-teal-700 dark:hover:text-teal-400">About us</Link>
+          </p>
           © {new Date().getFullYear()} ShopNGo. All rights reserved.
           <div className="mt-1">
             <AnalyticsPreferencesButton />

@@ -12,6 +12,7 @@ const navLinks = [
   { href: "/search", label: "Search" },
   { href: "/categories", label: "Categories" },
   { href: "/cart", label: "Cart" },
+  { href: "/about", label: "About" },
 ];
 
 export function Header() {
