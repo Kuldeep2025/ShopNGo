@@ -11,6 +11,8 @@ import {
   User,
   GoogleAuthProvider,
   signInWithPopup,
+  sendPasswordResetEmail,
+  updateProfile,
 } from "firebase/auth";
 import { getClientFirebaseConfig, isFirebaseConfigured } from "@/lib/env";
 import type { Analytics } from "firebase/analytics";
@@ -105,10 +107,27 @@ export async function signInWithEmail(email: string, password: string) {
   return signInWithEmailAndPassword(authInstance, email, password);
 }
 
-export async function signUpWithEmail(email: string, password: string) {
+export async function signUpWithEmail(email: string, password: string, displayName?: string) {
   const authInstance = getFirebaseAuth();
   if (!authInstance) throw new Error("Firebase Auth is not configured. Check .env.local");
-  return createUserWithEmailAndPassword(authInstance, email, password);
+  const cred = await createUserWithEmailAndPassword(authInstance, email, password);
+  const name = displayName?.trim();
+  if (name) {
+    try {
+      await updateProfile(cred.user, { displayName: name });
+      // Refresh the token so the server sees the name on the first request.
+      await cred.user.getIdToken(true);
+    } catch {
+      /* the name is a nicety; the account itself is created */
+    }
+  }
+  return cred;
+}
+
+export async function sendResetEmail(email: string) {
+  const authInstance = getFirebaseAuth();
+  if (!authInstance) throw new Error("Firebase Auth is not configured. Check .env.local");
+  return sendPasswordResetEmail(authInstance, email);
 }
 
 export async function signInWithGoogle() {

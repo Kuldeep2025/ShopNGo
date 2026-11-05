@@ -14,6 +14,7 @@ export default function SignInPage() {
   const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
   const configured =
     typeof window !== "undefined" ? isFirebaseConfigured() : false;
 
@@ -35,7 +36,7 @@ export default function SignInPage() {
       if (mode === "signin") {
         await auth.signInWithEmail(email, password);
       } else {
-        await auth.signUpWithEmail(email, password);
+        await auth.signUpWithEmail(email, password, displayName);
       }
       router.push("/");
       router.refresh();
@@ -59,6 +60,44 @@ export default function SignInPage() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function handleGoogle() {
+    setError(null);
+    setNotice(null);
+    if (!configured) {
+      setError("Sign-in is not set up on this demo yet. You can still browse products and categories.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const auth = await import("@/lib/auth/firebase-client");
+      await auth.signInWithGoogle();
+      router.push("/");
+      router.refresh();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "";
+      if (message.includes("popup-closed")) setError("The Google window was closed before signing in.");
+      else setError("Google sign-in did not work. Please try again or use your email.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleReset() {
+    setError(null);
+    setNotice(null);
+    if (!email.trim()) {
+      setError("Enter your email address above first, then choose Forgot password.");
+      return;
+    }
+    try {
+      const auth = await import("@/lib/auth/firebase-client");
+      await auth.sendResetEmail(email.trim());
+    } catch {
+      /* do not reveal whether the address has an account */
+    }
+    setNotice("If an account exists for that email, a reset link is on its way.");
   }
 
   return (
@@ -132,9 +171,25 @@ export default function SignInPage() {
           </Alert>
         )}
 
+        {notice && (
+          <Alert variant="success">{notice}</Alert>
+        )}
+
         <Button type="submit" fullWidth loading={loading} size="lg">
           {mode === "signin" ? "Sign in" : "Create account"}
         </Button>
+
+        <Button type="button" variant="outline" fullWidth size="lg" onClick={handleGoogle} disabled={loading}>
+          Continue with Google
+        </Button>
+
+        {mode === "signin" && (
+          <p className="text-center text-sm">
+            <button type="button" className="font-medium text-teal-700 hover:underline" onClick={handleReset}>
+              Forgot password?
+            </button>
+          </p>
+        )}
 
         <p className="text-center text-sm text-gray-600">
           {mode === "signin" ? (

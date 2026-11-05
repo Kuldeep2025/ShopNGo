@@ -6,6 +6,8 @@ import { getDemoListingBySlug } from "@/lib/demo-data";
 import { prisma, isDatabaseConfigured } from "@/lib/db";
 import { pickArtworkVariant } from "@/features/cinematic/layoutEngine";
 import { getListingImageUrl, getListingImageAlt } from "@/features/catalogue/media";
+import { AddToCartButton } from "@/components/cart/AddToCartButton";
+import { ProductReviews } from "@/components/reviews/ProductReviews";
 import { FrequentlyBoughtTogether } from "@/components/insights/FrequentlyBoughtTogether";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -151,20 +153,17 @@ export default async function ProductPage({ params }: Props) {
           </div>
 
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button size="lg" disabled title="Sign in and add from cart when available">
-              Add to cart
-            </Button>
+            <AddToCartButton listingId={listing.id} productTitle={listing.title} />
             <Link href={`/stores/${store.slug}`}>
               <Button size="lg" variant="outline">
                 View store
               </Button>
             </Link>
           </div>
-          <p className="mt-3 text-xs text-gray-500">
-            Sign in to add items to your cart and checkout.
-          </p>
         </div>
       </div>
+
+      <ProductReviews listingId={listing.id} />
 
       <FrequentlyBoughtTogether slug={listing.slug} />
     </div>

@@ -23,7 +23,12 @@ const display = Outfit({
   display: "swap",
 });
 
+const siteUrl =
+  process.env.APP_URL ||
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000");
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     default: "ShopNGo",
     template: "%s · ShopNGo",
@@ -34,7 +39,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "ShopNGo",
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "default",
   },
   icons: {
     icon: [
@@ -44,6 +49,7 @@ export const metadata: Metadata = {
     ],
     apple: "/apple-touch-icon.png",
   },
+  other: { "mobile-web-app-capable": "yes" },
   openGraph: {
     title: "ShopNGo",
     description: "Discover. Understand. Compare. Buy. Track.",
@@ -73,7 +79,7 @@ export default function RootLayout({
           <AuthProvider>
             <SkipLink />
             <Header />
-            <main id="main-content" className="flex-1">
+            <main id="main-content" tabIndex={-1} className="flex-1 focus:outline-none">
               {children}
             </main>
             <Footer />

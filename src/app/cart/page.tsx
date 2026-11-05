@@ -70,7 +70,10 @@ export default function CartPage() {
     setActing(true);
     setError(null);
     const token = await getIdToken();
-    if (!token) return;
+    if (!token) {
+      setActing(false);
+      return;
+    }
     try {
       const res = await fetch("/api/cart/items", {
         method: "PATCH",
@@ -185,7 +188,7 @@ export default function CartPage() {
                 >
                   −
                 </button>
-                <span className="w-8 text-center text-sm font-medium">
+                <span className="w-8 text-center text-sm font-medium" aria-live="polite" aria-label={`Quantity ${item.quantity}`}>
                   {item.quantity}
                 </span>
                 <button
@@ -224,9 +227,17 @@ export default function CartPage() {
             Final total is confirmed at checkout.
           </p>
           <div className="mt-6">
-            <Button fullWidth size="lg" disabled={!quote.allAvailable}>
-              Proceed to checkout
-            </Button>
+            {quote.allAvailable ? (
+              <Link href="/checkout" className="block">
+                <Button fullWidth size="lg">
+                  Proceed to checkout
+                </Button>
+              </Link>
+            ) : (
+              <Button fullWidth size="lg" disabled>
+                Proceed to checkout
+              </Button>
+            )}
           </div>
         </div>
       )}

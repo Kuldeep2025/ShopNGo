@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     if (
       !orderItem ||
       orderItem.order.customerId !== user.id ||
-      orderItem.order.status !== "PAID" ||
+      !["PAID", "PROCESSING", "SHIPPED", "DELIVERED"].includes(orderItem.order.status) ||
       orderItem.listingId !== parsed.data.listingId
     ) {
       return NextResponse.json(

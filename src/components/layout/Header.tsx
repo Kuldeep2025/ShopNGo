@@ -64,6 +64,14 @@ export function Header() {
               My store
             </Link>
           )}
+          {isSeller && (
+            <Link
+              href="/seller/orders"
+              className="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-teal-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              Store orders
+            </Link>
+          )}
           {appUser && !isSeller && (
             <Link
               href="/seller/apply"
@@ -77,7 +85,15 @@ export function Header() {
               href="/moderator/applications"
               className="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-teal-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
-              Review
+              Review sellers
+            </Link>
+          )}
+          {isModerator && (
+            <Link
+              href="/moderator/listings"
+              className="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-teal-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              Review listings
             </Link>
           )}
           {isModerator && (
@@ -178,6 +194,33 @@ export function Header() {
               {link.label}
             </Link>
           ))}
+          {appUser &&
+            [
+              { href: "/orders", label: "My orders" },
+              { href: "/account", label: "My account" },
+              ...(isSeller
+                ? [
+                    { href: "/seller/listings", label: "My store" },
+                    { href: "/seller/orders", label: "Store orders" },
+                  ]
+                : [{ href: "/seller/apply", label: "Sell on ShopNGo" }]),
+              ...(isModerator
+                ? [
+                    { href: "/moderator/applications", label: "Review sellers" },
+                    { href: "/moderator/listings", label: "Review listings" },
+                    { href: "/insights", label: "Insights" },
+                  ]
+                : []),
+            ].map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="rounded-lg px-3 py-2.5 text-sm font-medium text-gray-700 hover:bg-teal-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
+                onClick={() => setOpen(false)}
+              >
+                {link.label}
+              </Link>
+            ))}
           <button
             type="button"
             className="rounded-lg px-3 py-2.5 text-left text-sm font-medium text-gray-700 hover:bg-teal-50 dark:text-zinc-300 dark:hover:bg-zinc-800"

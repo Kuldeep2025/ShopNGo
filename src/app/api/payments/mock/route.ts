@@ -7,7 +7,7 @@ import { z } from "zod";
  * POST /api/payments/mock
  * Mock payment adapter – demo/test only.
  * Browser cannot mark paid without going through this server path.
- * PAYMENTS_LIVE_ENABLED must remain false.
+ * Disabled when DEMO_PAYMENTS_ENABLED=false or PAYMENTS_LIVE_ENABLED=true.
  */
 
 const mockPaymentSchema = z.object({
@@ -16,10 +16,11 @@ const mockPaymentSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  // Mock settlement is strictly local/test-only; never expose it in production.
-  if (process.env.NODE_ENV === "production" || process.env.PAYMENTS_LIVE_ENABLED === "true") {
+  // Demo settlement takes no real money. It is on by default so the shop works end to end
+  // before a payment provider is connected; switch it off with DEMO_PAYMENTS_ENABLED=false.
+  if (process.env.DEMO_PAYMENTS_ENABLED === "false" || process.env.PAYMENTS_LIVE_ENABLED === "true") {
     return NextResponse.json(
-      { error: "Mock payment settlement is disabled in production" },
+      { error: "Demo payments are switched off on this site" },
       { status: 403 }
     );
   }

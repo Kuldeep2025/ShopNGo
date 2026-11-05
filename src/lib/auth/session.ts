@@ -45,8 +45,16 @@ export async function getSessionUser(
     };
   }
 
+  // Owners listed in ADMIN_EMAILS get admin and moderator access on sign-in.
+  const adminEmails = (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  const isBootstrapAdmin =
+    decoded.email_verified !== false && adminEmails.includes(decoded.email.toLowerCase());
+
   // Upsert internal user – idempotent
-  const user = await prisma.user.upsert({
+  const upserted = await prisma.user.upsert({
     where: { firebaseUid: decoded.uid },
     update: {
       email: decoded.email,
@@ -58,7 +66,7 @@ export async function getSessionUser(
       email: decoded.email,
       displayName: decoded.name ?? null,
       photoUrl: decoded.picture ?? null,
-      roles: ["CUSTOMER"],
+      roles: isBootstrapAdmin ? ["CUSTOMER", "ADMIN", "MODERATOR"] : ["CUSTOMER"],
     },
     select: {
       id: true,
@@ -69,7 +77,17 @@ export async function getSessionUser(
     },
   });
 
-  return user;
+  if (isBootstrapAdmin && !upserted.roles.includes("ADMIN")) {
+    const roles = Array.from(new Set([...upserted.roles, "ADMIN", "MODERATOR"])) as Role[];
+    const promoted = await prisma.user.update({
+      where: { id: upserted.id },
+      data: { roles },
+      select: { id: true, firebaseUid: true, email: true, displayName: true, roles: true },
+    });
+    return promoted;
+  }
+
+  return upserted;
 }
 
 /** Require an authenticated user or throw a structured error */
