@@ -77,6 +77,8 @@ model User {
   orders       Order[]  @relation("CustomerOrders")
   reviews      Review[]
   messages     Message[]
+  conversations Conversation[] @relation("CustomerConversations")
+  messageReports MessageReport[]
 
   @@index([firebaseUid])
   @@index([email])
@@ -158,6 +160,7 @@ model Store {
 
   listings    Listing[]
   sellerOrders SellerOrder[]
+  conversations Conversation[]
 
   @@index([ownerId])
   @@index([slug])
@@ -190,11 +193,25 @@ model Listing {
   stock       Int?
   attributes  Json?
   media       Json?
+  /// Print rate / maximum retail price. Null when the seller has not set one.
+  mrp         Decimal?      @db.Decimal(12, 2)
+  /// Sale switch. The sale price only applies between saleStartsAt and saleEndsAt (worked out when read, no cron).
+  saleEnabled Boolean       @default(false)
+  salePrice   Decimal?      @db.Decimal(12, 2)
+  saleStartsAt DateTime?
+  saleEndsAt  DateTime?
+  /// Days a buyer can return after delivery. Null = not stated, 0 = no returns.
+  returnDays  Int?
+  /// Months of warranty. Null or 0 = none.
+  warrantyMonths Int?
+  guaranteeText String?
+  replacementPolicy String?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
   orderItems  OrderItem[]
   reviews     Review[]
+  conversations Conversation[]
 
   @@unique([storeId, slug])
   @@index([status])
@@ -287,17 +304,68 @@ model Review {
   @@index([listingId])
 }
 
+/// A customer and a store talking about one product (or one ordered item).
+model Conversation {
+  id             String   @id @default(cuid())
+  /// customerId|storeId|listingId|orderItemId (or -): one thread per customer, product and ordered item.
+  threadKey      String   @unique
+  customerId     String
+  customer       User     @relation("CustomerConversations", fields: [customerId], references: [id])
+  storeId        String
+  store          Store    @relation(fields: [storeId], references: [id])
+  listingId      String?
+  listing        Listing? @relation(fields: [listingId], references: [id])
+  orderId        String?
+  orderItemId    String?
+  /// PRESALE, ORDER, ISSUE, WARRANTY, RETURN or OTHER
+  topic          String   @default("PRESALE")
+  customerUnread Int      @default(0)
+  sellerUnread   Int      @default(0)
+  lastMessageAt  DateTime @default(now())
+  createdAt      DateTime @default(now())
+
+  messages Message[]
+
+  @@index([customerId, lastMessageAt])
+  @@index([storeId, lastMessageAt])
+}
+
 model Message {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  storeId   String?
-  orderId   String?
-  body      String
-  createdAt DateTime @default(now())
+  id             String        @id @default(cuid())
+  userId         String
+  user           User          @relation(fields: [userId], references: [id])
+  storeId        String?
+  orderId        String?
+  body           String
+  createdAt      DateTime      @default(now())
+  conversationId String?
+  conversation   Conversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  /// CUSTOMER or SELLER
+  senderRole     String        @default("CUSTOMER")
+
+  reports MessageReport[]
 
   @@index([userId])
   @@index([storeId])
+  @@index([conversationId, createdAt])
+}
+
+/// A member reporting a message. Only reported messages are visible to moderators.
+model MessageReport {
+  id         String    @id @default(cuid())
+  messageId  String
+  message    Message   @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  reporterId String
+  reporter   User      @relation(fields: [reporterId], references: [id])
+  reason     String?
+  /// OPEN or RESOLVED
+  status     String    @default("OPEN")
+  resolvedBy String?
+  resolvedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@unique([messageId, reporterId])
+  @@index([status, createdAt])
 }
 
 model AuditLog {

@@ -3,10 +3,24 @@ import { prisma, isDatabaseConfigured } from "@/lib/db";
 import { requireUser } from "@/lib/auth/session";
 import { errorResponse } from "@/features/delivery/errors";
 import { z } from "zod";
+import { normaliseIndianPhone } from "@/features/delivery/phone";
 
 const applySchema = z.object({
   fullName: z.string().trim().min(2).max(80).optional(),
-  phone: z.string().trim().regex(/^[0-9+\-\s]{7,16}$/, "Enter a valid phone number").optional(),
+  phone: z
+    .string()
+    .trim()
+    .max(20)
+    .transform((v, ctx) => {
+      if (v === "") return undefined;
+      const n = normaliseIndianPhone(v);
+      if (!n) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Enter a valid 10-digit Indian mobile number, for example 98765 43210." });
+        return z.NEVER;
+      }
+      return n;
+    })
+    .optional(),
   city: z.string().trim().min(2).max(60).optional(),
   vehicleType: z.string().trim().max(50).optional(),
   licenseNo: z.string().trim().max(50).optional(),

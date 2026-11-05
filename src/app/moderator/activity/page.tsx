@@ -6,6 +6,7 @@ import { useAuth } from "@/features/identity/AuthProvider";
 import { Alert, Badge, Button, Spinner } from "@/components/ui";
 import { SignInRequired } from "@/components/feedback/SignInRequired";
 import { apiCall, formatMoney } from "@/lib/client/api";
+import { ReportedMessages } from "@/features/messaging/ui/ReportedMessages";
 
 type Activity = {
   needsAttention: { sellerApplications: number; listings: number; deliveryApplications: number };
@@ -225,6 +226,8 @@ export default function ModeratorActivityPage() {
               </ul>
             </section>
           </div>
+
+          <ReportedMessages />
 
           <section aria-labelledby="audit" className="mt-10">
             <h2 id="audit" className="text-lg font-semibold text-gray-900 dark:text-zinc-100">

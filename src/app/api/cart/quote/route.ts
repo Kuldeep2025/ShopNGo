@@ -8,6 +8,7 @@ import {
   multiplyMoney,
   addMoney,
 } from "@/features/cart/quote";
+import { computeEffectivePrice } from "@/features/pricing/effectivePrice";
 
 /**
  * POST /api/cart/quote
@@ -69,7 +70,8 @@ export async function POST(req: NextRequest) {
         issues.push(`Only ${listing.stock} in stock (requested ${item.quantity})`);
       }
 
-      const unitPrice = listing ? listing.price.toString() : "0.00";
+      const eff = listing ? computeEffectivePrice(listing) : null;
+      const unitPrice = eff ? eff.unitPrice : "0.00";
       const lineTotal = available ? multiplyMoney(unitPrice, item.quantity) : "0.00";
 
       lines.push({
@@ -84,6 +86,9 @@ export async function POST(req: NextRequest) {
         storeName: listing?.store.name ?? "",
         available,
         issues,
+        strikePrice: eff?.strikePrice ?? null,
+        percentOff: eff?.percentOff ?? 0,
+        saleEndsAt: eff?.saleEndsAt ?? null,
       });
 
       if (!available) {

@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth/session";
 import { isPubliclyVisible } from "@/features/catalogue";
 import { createOrderSchema } from "@/features/orders/create";
 import { multiplyMoney, addMoney } from "@/features/cart/quote";
+import { computeEffectivePrice } from "@/features/pricing/effectivePrice";
 
 /**
  * GET  /api/orders – list current user's orders
@@ -110,6 +111,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Price is always worked out here from the listing and the current time, never taken from the browser.
+    const orderedAt = new Date();
+    const unitPriceOf = (listing: (typeof listings)[number]) => computeEffectivePrice(listing, orderedAt).unitPrice;
+
     // Group by store
     const byStore = new Map<string, typeof cart.items>();
     for (const item of cart.items) {
@@ -160,7 +165,7 @@ export async function POST(req: NextRequest) {
 
       for (const item of cart.items) {
         const listing = listingMap.get(item.listingId)!;
-        const unit = listing.price.toString();
+        const unit = unitPriceOf(listing);
         const lineTotal = multiplyMoney(unit, item.quantity);
         lineTotals.push(lineTotal);
         allItemData.push({
@@ -190,7 +195,7 @@ export async function POST(req: NextRequest) {
       for (const [storeId, storeItems] of byStore) {
         const storeLineTotals = storeItems.map((item) => {
           const listing = listingMap.get(item.listingId)!;
-          return multiplyMoney(listing.price.toString(), item.quantity);
+          return multiplyMoney(unitPriceOf(listing), item.quantity);
         });
         const subtotal = addMoney(storeLineTotals);
 

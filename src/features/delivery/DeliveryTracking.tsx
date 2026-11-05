@@ -10,6 +10,8 @@ type Tracking = {
   status: string;
   partnerFirstName: string;
   vehicleType: string | null;
+  partnerName?: string | null;
+  partnerPhone?: string | null;
   partnerPosition: { lat: number; lng: number } | null;
   positionUpdatedAt: string | null;
   destination: { lat: number; lng: number } | null;
@@ -54,6 +56,24 @@ export function DeliveryTracking({ orderId }: { orderId: string }) {
           {t.partnerFirstName}
           {t.vehicleType ? ` (${t.vehicleType.toLowerCase()})` : ""} {SUMMARY[t.status] ?? ""}.
         </p>
+        {active && t.partnerPhone && (
+          <div id="delivery-partner-contact" className="mt-3 rounded-lg border border-teal-200 bg-teal-50 p-3 dark:border-teal-900 dark:bg-teal-950/40">
+            <p className="text-sm font-medium text-gray-900 dark:text-zinc-100">
+              Your delivery partner: {t.partnerName ?? t.partnerFirstName}
+            </p>
+            <p className="mt-1 text-sm text-gray-800 dark:text-zinc-200">Phone: {t.partnerPhone}</p>
+            <a
+              href={`tel:${t.partnerPhone.replace(/[^\d+]/g, "")}`}
+              aria-label={`Call delivery partner ${t.partnerName ?? t.partnerFirstName} on ${t.partnerPhone}`}
+              className="mt-2 inline-flex min-h-11 items-center rounded-lg bg-teal-700 px-4 text-sm font-semibold text-white hover:bg-teal-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2"
+            >
+              Call
+            </a>
+            <p className="mt-2 text-xs text-gray-600 dark:text-zinc-400">
+              The partner&apos;s name and number are shown only while your order is being delivered. They disappear once it is delivered.
+            </p>
+          </div>
+        )}
         {active && t.distanceKm !== null && (
           <p className="mt-2 text-sm text-gray-800 dark:text-zinc-200">
             About {describeDistance(t.distanceKm)} from you, arriving in roughly {t.etaMinutes} minutes.

@@ -3,6 +3,8 @@ import { prisma, isDatabaseConfigured } from "@/lib/db";
 import { getSessionUser, requireUser } from "@/lib/auth/session";
 import { createReviewSchema, VERIFIED_ORDER_STATUSES } from "@/features/reviews/schema";
 import { analyseReviews } from "@/features/reviews/analyse";
+import { hasDeliveredPurchase } from "@/features/messaging/server";
+import { REVIEW_GATE_TEXT } from "@/features/messaging/rules";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +42,10 @@ export async function GET(req: NextRequest) {
     const summary = analyseReviews(
       rows.map((r) => ({ rating: r.rating, title: r.title, body: r.body, createdAt: r.createdAt, author: r.user.displayName }))
     );
+    const canReview = me ? await hasDeliveredPurchase(me.id, listingId) : false;
     return NextResponse.json({
+      canReview,
+      gateText: REVIEW_GATE_TEXT,
       reviews: rows.map((r) => ({
         id: r.id,
         rating: r.rating,
@@ -84,6 +89,11 @@ export async function POST(req: NextRequest) {
         { error: "This sample product is not stored in the shop, so it cannot be reviewed." },
         { status: 404 }
       );
+    }
+
+    // Only customers whose order for this product has been delivered may review it (new reviews and edits).
+    if (!(await hasDeliveredPurchase(user.id, listing.id))) {
+      return NextResponse.json({ error: REVIEW_GATE_TEXT, code: "NOT_DELIVERED" }, { status: 403 });
     }
 
     const data = {

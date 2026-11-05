@@ -2,6 +2,7 @@ import Link from "next/link";
 import { frequentlyBoughtTogether, similarItems, toBaskets } from "@/features/analytics";
 import { loadTransactions } from "@/features/analytics/dataSource";
 import { listingIdForSlug, publicListingsByIds } from "@/features/analytics/server";
+import { PriceTag } from "@/features/pricing/PriceTag";
 
 /**
  * Server component: "Frequently bought together" mined from order history
@@ -43,9 +44,7 @@ export async function FrequentlyBoughtTogether({ slug }: { slug: string }) {
                   className="block h-full rounded-2xl border border-gray-200 p-4 transition hover:border-teal-400 hover:shadow-sm"
                 >
                   <p className="font-medium text-gray-900">{l.title}</p>
-                  <p className="mt-1 text-sm text-teal-800">
-                    {l.currency === "INR" ? `₹ ${l.price}` : `${l.currency} ${l.price}`}
-                  </p>
+                  <PriceTag size="sm" price={l.price} currency={l.currency} strikePrice={l.pricing?.strikePrice} percentOff={l.pricing?.percentOff} saleEndsAt={l.pricing?.saleEndsAt} showEnd={false} />
                   {rule && (
                     <p className="mt-2 text-xs text-gray-500">
                       {Math.round(rule.confidence * 100)}% of buyers also chose this · lift {rule.lift.toFixed(2)}

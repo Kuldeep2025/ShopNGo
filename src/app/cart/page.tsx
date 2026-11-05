@@ -8,6 +8,7 @@ import { Button, Alert, Spinner, Badge } from "@/components/ui";
 import { ProductAdSlot } from "@/components/insights/ProductAdSlot";
 import { SignInRequired } from "@/components/feedback/SignInRequired";
 import type { QuoteResult } from "@/features/cart/quote";
+import { formatIst } from "@/features/pricing/effectivePrice";
 
 type CartItem = {
   id: string;
@@ -18,6 +19,9 @@ type CartItem = {
     title: string;
     slug: string;
     price: string;
+    strikePrice?: string | null;
+    percentOff?: number;
+    saleEndsAt?: string | null;
     currency: string;
     productType: string;
     stock: number | null;
@@ -168,6 +172,14 @@ export default function CartPage() {
                       {item.listing.store.name} ·{" "}
                       {item.listing.currency === "INR" ? "₹" : item.listing.currency}{" "}
                       {item.listing.price}
+                      {item.listing.strikePrice && (item.listing.percentOff ?? 0) > 0 && (
+                        <>
+                          {" "}
+                          <s><span className="sr-only">Original price </span>{item.listing.strikePrice}</s>{" "}
+                          <span className="font-semibold text-emerald-700">{item.listing.percentOff}% off</span>
+                          {item.listing.saleEndsAt && <> · Sale ends {formatIst(item.listing.saleEndsAt)}</>}
+                        </>
+                      )}
                       {!item.listing.available && (
                         <Badge variant="error" className="ml-2">
                           Unavailable

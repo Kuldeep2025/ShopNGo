@@ -13,6 +13,9 @@ import { FrequentlyBoughtTogether } from "@/components/insights/FrequentlyBought
 import { SimilarProducts } from "@/components/insights/SimilarProducts";
 import { ProductAdSlot } from "@/components/insights/ProductAdSlot";
 import { ProductViewTracker } from "@/components/insights/ProductViewTracker";
+import { PriceTag } from "@/features/pricing/PriceTag";
+import { PolicySection } from "@/features/policy/PolicySection";
+import { ProductMessageSeller } from "@/features/messaging/ui/ProductMessageSeller";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -81,8 +84,6 @@ export default async function ProductPage({ params }: Props) {
   const outOfStock = stock !== null && stock <= 0;
   const typeLabel =
     PRODUCT_TYPE_LABELS[listing.productType] ?? listing.productType;
-  const priceLabel =
-    listing.currency === "INR" ? `₹ ${listing.price}` : `${listing.currency} ${listing.price}`;
   const artwork = pickArtworkVariant(listing, "general");
   const imageUrl = getListingImageUrl(listing, true);
 
@@ -136,7 +137,7 @@ export default async function ProductPage({ params }: Props) {
             {listing.title}
           </h1>
           {typeof brand === "string" && <p className="mt-2 text-sm text-gray-600">Brand: {brand}</p>}
-          <p className="mt-4 text-3xl font-semibold text-teal-800">{priceLabel}</p>
+          <PriceTag className="mt-4" size="lg" price={listing.price} currency={listing.currency} strikePrice={listing.pricing?.strikePrice} percentOff={listing.pricing?.percentOff} saleEndsAt={listing.pricing?.saleEndsAt} />
           {stock !== null && (
             <p className={`mt-2 text-sm font-medium ${outOfStock ? "text-red-700" : stock <= 5 ? "text-amber-800" : "text-emerald-800"}`}>
               {outOfStock ? "Out of stock" : stock <= 5 ? `Only ${stock} left in stock` : "In stock"}
@@ -167,6 +168,8 @@ export default async function ProductPage({ params }: Props) {
             )}
           </div>
 
+          <PolicySection policy={listing.policy} />
+
           <div className="mt-8 flex flex-wrap gap-3">
             <AddToCartButton listingId={listing.id} productTitle={listing.title} outOfStock={outOfStock} />
             <Link href={`/stores/${store.slug}`}>
@@ -179,6 +182,8 @@ export default async function ProductPage({ params }: Props) {
       </div>
 
       <ProductAdSlot placement="product-below-details" source="similar" productRef={listing.id} className="mt-8 !px-0 sm:!px-0" />
+
+      <ProductMessageSeller listingId={listing.id} storeName={store.name} />
 
       <PriceComparison listingId={listing.id} />
 

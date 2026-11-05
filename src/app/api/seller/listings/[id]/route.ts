@@ -5,6 +5,7 @@ import {
   updateListingSchema,
   isMaterialChange,
 } from "@/features/listings/listing";
+import { buildPricingPolicyData } from "@/features/pricing/seller";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -63,6 +64,12 @@ export async function PATCH(req: NextRequest, context: Ctx) {
     }
 
     const update = parsed.data as Record<string, unknown>;
+    const extra = buildPricingPolicyData(
+      body,
+      (update.price as string | undefined) ?? existing.price.toString(),
+      existing
+    );
+    if (!extra.ok) return NextResponse.json({ error: extra.error }, { status: 400 });
     let newStatus = existing.status;
 
     // Material edit of APPROVED listing → back to SUBMITTED
@@ -86,6 +93,7 @@ export async function PATCH(req: NextRequest, context: Ctx) {
         ...(update.stock !== undefined ? { stock: update.stock as number } : {}),
         ...(update.categoryId !== undefined ? { categoryId: update.categoryId as string } : {}),
         ...(update.attributes !== undefined ? { attributes: update.attributes as never } : {}),
+        ...(extra.data as Record<string, unknown>),
         status: newStatus as never,
       },
     });

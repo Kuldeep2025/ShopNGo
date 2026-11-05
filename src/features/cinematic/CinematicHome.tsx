@@ -19,6 +19,7 @@ import {
   type SessionSignals,
   type LifestyleTag,
 } from "./layoutEngine";
+import { PriceTag } from "@/features/pricing/PriceTag";
 
 function SkeletonHome() {
   return (
@@ -96,9 +97,7 @@ function ProductRailCard({
         <p className="mt-1 text-xs text-zinc-500">
           {PRODUCT_TYPE_LABELS[product.productType] ?? product.productType}
         </p>
-        <p className="mt-1 text-sm font-semibold text-teal-400">
-          {product.currency === "INR" ? "₹" : product.currency} {product.price}
-        </p>
+        <PriceTag size="sm" price={product.price} currency={product.currency} strikePrice={product.pricing?.strikePrice} percentOff={product.pricing?.percentOff} showEnd={false} className="mt-1 text-teal-400" />
       </div>
     </Link>
   );

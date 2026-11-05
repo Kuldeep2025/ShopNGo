@@ -26,6 +26,10 @@ export type QuoteLine = {
   storeName: string;
   available: boolean;
   issues: string[];
+  /** Struck-through price (MRP or regular), when the unit price is discounted. */
+  strikePrice?: string | null;
+  percentOff?: number;
+  saleEndsAt?: string | null;
 };
 
 export type QuoteResult = {

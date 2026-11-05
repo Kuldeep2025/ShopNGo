@@ -3,6 +3,7 @@
  * Never leak moderation notes, internal decision fields or private media URLs.
  */
 
+import { computeEffectivePrice, type PricingFields } from "@/features/pricing/effectivePrice";
 import type { PublicListingDTO, PublicCategoryDTO, PublicStoreDTO } from "./types";
 
 type ListingRecord = {
@@ -17,6 +18,15 @@ type ListingRecord = {
   media: unknown;
   attributes: unknown;
   stock?: number | null;
+  mrp?: PricingFields["mrp"];
+  saleEnabled?: boolean | null;
+  salePrice?: PricingFields["salePrice"];
+  saleStartsAt?: Date | string | null;
+  saleEndsAt?: Date | string | null;
+  returnDays?: number | null;
+  warrantyMonths?: number | null;
+  guaranteeText?: string | null;
+  replacementPolicy?: string | null;
   createdAt: Date | string;
   store: {
     id: string;
@@ -32,16 +42,28 @@ type ListingRecord = {
 };
 
 export function toPublicListingDTO(record: ListingRecord): PublicListingDTO {
+  const eff = computeEffectivePrice(record);
   return {
     id: record.id,
     title: record.title,
     slug: record.slug,
     description: record.description,
     productType: record.productType as PublicListingDTO["productType"],
-    price:
-      typeof record.price === "object" && record.price !== null
-        ? record.price.toString()
-        : String(record.price),
+    price: eff.unitPrice,
+    pricing: {
+      regularPrice: eff.regularPrice,
+      strikePrice: eff.strikePrice,
+      percentOff: eff.percentOff,
+      onSale: eff.onSale,
+      saleUpcoming: eff.saleUpcoming,
+      saleEndsAt: eff.saleEndsAt,
+    },
+    policy: {
+      returnDays: record.returnDays ?? null,
+      warrantyMonths: record.warrantyMonths ?? null,
+      guaranteeText: record.guaranteeText ?? null,
+      replacementPolicy: record.replacementPolicy ?? null,
+    },
     currency: record.currency,
     store: {
       id: record.store.id,

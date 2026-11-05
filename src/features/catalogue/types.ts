@@ -53,7 +53,24 @@ export type PublicListingDTO = {
   slug: string;
   description: string | null;
   productType: ProductType;
+  /** What the customer pays right now (the sale price while a sale is running). */
   price: string; // Decimal serialised as string
+  /** Strikethrough price, discount and sale end, worked out at read time. */
+  pricing?: {
+    regularPrice: string;
+    strikePrice: string | null;
+    percentOff: number;
+    onSale: boolean;
+    saleUpcoming: boolean;
+    saleEndsAt: string | null;
+  };
+  /** The seller's return, warranty and guarantee policy. */
+  policy?: {
+    returnDays: number | null;
+    warrantyMonths: number | null;
+    guaranteeText: string | null;
+    replacementPolicy: string | null;
+  };
   currency: string;
   store: {
     id: string;

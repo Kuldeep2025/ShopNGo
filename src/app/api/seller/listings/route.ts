@@ -6,6 +6,7 @@ import {
   createListingSchema,
   slugify,
 } from "@/features/listings/listing";
+import { buildPricingPolicyData } from "@/features/pricing/seller";
 
 /**
  * GET  /api/seller/listings – list current seller's listings
@@ -69,6 +70,8 @@ export async function POST(req: NextRequest) {
     }
 
     const data = parsed.data;
+    const extra = buildPricingPolicyData(body, data.price);
+    if (!extra.ok) return NextResponse.json({ error: extra.error }, { status: 400 });
     const baseSlug = slugify(data.title);
     const slug = `${baseSlug}-${Date.now().toString(36).slice(-4)}`;
 
@@ -85,6 +88,7 @@ export async function POST(req: NextRequest) {
         categoryId: data.categoryId ?? null,
         attributes: data.attributes as Prisma.InputJsonValue | undefined,
         status: body.submit ? "SUBMITTED" : "DRAFT",
+        ...(extra.data as Record<string, unknown>),
       },
     });
 

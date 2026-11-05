@@ -32,6 +32,10 @@ export async function GET(req: NextRequest, ctx: Ctx) {
         status: d.status,
         partnerFirstName: (d.partner.fullName ?? "Your delivery partner").split(" ")[0],
         vehicleType: d.partner.vehicleType,
+        // Contact details are shared only while this delivery is active (accepted and not yet delivered).
+        contactActive: active,
+        partnerName: active ? (d.partner.fullName ?? null) : null,
+        partnerPhone: active ? (d.partner.phone ?? null) : null,
         partnerPosition: partnerPos,
         positionUpdatedAt: active ? d.partner.locationUpdatedAt : null,
         destination: dest,

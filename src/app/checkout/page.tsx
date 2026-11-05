@@ -10,6 +10,7 @@ import { Alert, Button, FormField, Input, Spinner } from "@/components/ui";
 import { SignInRequired } from "@/components/feedback/SignInRequired";
 import { apiCall, formatMoney } from "@/lib/client/api";
 import type { QuoteResult } from "@/features/cart/quote";
+import { formatIst } from "@/features/pricing/effectivePrice";
 
 type Address = {
   id: string;
@@ -188,6 +189,14 @@ export default function CheckoutPage() {
                 <p className="font-medium text-gray-900">{l.title}</p>
                 <p className="text-sm text-gray-500">
                   {l.storeName}, quantity {l.quantity} at {formatMoney(l.unitPrice, l.currency)}
+                  {l.strikePrice && (l.percentOff ?? 0) > 0 && (
+                    <>
+                      {" "}
+                      <s><span className="sr-only">Original price </span>{formatMoney(l.strikePrice, l.currency)}</s>{" "}
+                      <span className="font-semibold text-emerald-700">{l.percentOff}% off</span>
+                      {l.saleEndsAt && <> · Sale ends {formatIst(l.saleEndsAt)}</>}
+                    </>
+                  )}
                 </p>
               </div>
               <p className="font-medium text-gray-900">{formatMoney(l.lineTotal, l.currency)}</p>

@@ -11,6 +11,7 @@ import {
 } from "@/features/catalogue";
 import { DEMO_LISTINGS } from "@/lib/demo-data";
 import { prisma, isDatabaseConfigured } from "@/lib/db";
+import { PriceTag } from "@/features/pricing/PriceTag";
 
 export const dynamic = "force-dynamic";
 
@@ -144,9 +145,7 @@ export default async function StorePage({ params }: Props) {
                       {PRODUCT_TYPE_LABELS[l.productType] ?? l.productType}
                     </p>
                   </div>
-                  <p className="shrink-0 font-semibold text-teal-800">
-                    {l.currency} {l.price}
-                  </p>
+                  <PriceTag className="shrink-0" size="sm" price={l.price} currency={l.currency} strikePrice={l.pricing?.strikePrice} percentOff={l.pricing?.percentOff} saleEndsAt={l.pricing?.saleEndsAt} />
                 </Link>
               </li>
             ))}

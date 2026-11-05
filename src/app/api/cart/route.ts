@@ -1,3 +1,4 @@
+import { computeEffectivePrice } from "@/features/pricing/effectivePrice";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma, isDatabaseConfigured } from "@/lib/db";
 import { requireUser } from "@/lib/auth/session";
@@ -46,7 +47,10 @@ export async function GET(req: NextRequest) {
               id: listing.id,
               title: listing.title,
               slug: listing.slug,
-              price: listing.price.toString(),
+              price: computeEffectivePrice(listing).unitPrice,
+              strikePrice: computeEffectivePrice(listing).strikePrice,
+              percentOff: computeEffectivePrice(listing).percentOff,
+              saleEndsAt: computeEffectivePrice(listing).saleEndsAt,
               currency: listing.currency,
               productType: listing.productType,
               stock: listing.stock,

@@ -8,6 +8,7 @@ import { ThemeSwitcher, ThemeRadioGroup } from "@/components/layout/ThemeSwitche
 import { UserAvatar } from "@/features/avatars/UserAvatar";
 import { Button } from "@/components/ui";
 import { RotatingLogo } from "@/features/brand/RotatingLogo";
+import { useUnreadMessages, unreadLabel } from "@/features/messaging/ui/useUnread";
 
 const navLinks = [
   { href: "/search", label: "Search" },
@@ -20,6 +21,7 @@ const navLinks = [
 export function Header() {
   const [open, setOpen] = useState(false);
   const { appUser, firebaseUser, loading, signOut } = useAuth();
+  const unread = useUnreadMessages();
   const isSeller = appUser?.roles.includes("SELLER");
   const isDriver = appUser?.roles.includes("DELIVERY_PARTNER");
   const isModerator =
@@ -66,6 +68,15 @@ export function Header() {
               className="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-teal-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
               Store orders
+            </Link>
+          )}
+          {isSeller && (
+            <Link
+              href="/seller/inbox"
+              aria-label={unreadLabel("Seller inbox", unread.seller)}
+              className="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-teal-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              Inbox{unread.seller > 0 && <span className="ml-1 rounded-full bg-amber-500 px-1.5 text-xs font-bold text-white">{unread.seller}</span>}
             </Link>
           )}
           {signedIn && !isSeller && (
@@ -136,6 +147,12 @@ export function Header() {
                   Orders
                 </Button>
               </Link>
+              <Link href="/messages" aria-label={unreadLabel("Messages", unread.customer)}>
+                <Button variant="ghost" size="sm">
+                  Messages
+                  {unread.customer > 0 && <span className="ml-1 rounded-full bg-amber-500 px-1.5 text-xs font-bold text-white">{unread.customer}</span>}
+                </Button>
+              </Link>
               <Button variant="ghost" size="sm" onClick={() => signOut()}>
                 Sign out
               </Button>
@@ -193,11 +210,13 @@ export function Header() {
           {signedIn &&
             [
               { href: "/orders", label: "My orders" },
+              { href: "/messages", label: unreadLabel("Messages", unread.customer) },
               { href: "/account", label: "My account" },
               ...(isSeller
                 ? [
                     { href: "/seller/listings", label: "My store" },
                     { href: "/seller/orders", label: "Store orders" },
+                    { href: "/seller/inbox", label: unreadLabel("Seller inbox", unread.seller) },
                   ]
                 : [{ href: "/seller/apply", label: "Sell on ShopNGo" }]),
               { href: isDriver ? "/delivery" : "/delivery/apply", label: isDriver ? "My deliveries" : "Become a delivery partner" },

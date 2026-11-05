@@ -23,6 +23,8 @@ export function ProductReviews({ listingId }: { listingId: string }) {
   const { firebaseUser, loading: authLoading, getIdToken } = useAuth();
   const signedIn = Boolean(firebaseUser);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [canReview, setCanReview] = useState(false);
+  const [gateText, setGateText] = useState("You can review this product after it is delivered to you.");
   const [loaded, setLoaded] = useState(false);
   const [loadError, setLoadError] = useState(false);
   const [rating, setRating] = useState(0);
@@ -34,9 +36,11 @@ export function ProductReviews({ listingId }: { listingId: string }) {
   const [prefilled, setPrefilled] = useState(false);
 
   const loadReviews = useCallback(async () => {
-    const res = await apiCall<{ reviews?: Review[] }>(getIdToken, `/api/reviews?listingId=${encodeURIComponent(listingId)}`);
+    const res = await apiCall<{ reviews?: Review[]; canReview?: boolean; gateText?: string }>(getIdToken, `/api/reviews?listingId=${encodeURIComponent(listingId)}`);
     if (res.ok) {
       setReviews(res.data.reviews ?? []);
+      setCanReview(Boolean(res.data.canReview));
+      if (res.data.gateText) setGateText(res.data.gateText);
       setLoadError(false);
     } else {
       setLoadError(true);
@@ -131,11 +135,16 @@ export function ProductReviews({ listingId }: { listingId: string }) {
               <Button>Sign in to review</Button>
             </Link>
           </div>
+        ) : !loaded ? null : !canReview ? (
+          <div className="rounded-xl border border-gray-200 bg-white p-5">
+            <h3 className="font-semibold text-gray-900">Write a review</h3>
+            <p className="mt-1 text-sm text-gray-700" role="status">{gateText}</p>
+          </div>
         ) : (
           <form onSubmit={submit} className="space-y-4 rounded-xl border border-gray-200 bg-white p-5" noValidate>
             <h3 className="font-semibold text-gray-900">{mine ? "Edit your review" : "Write a review"}</h3>
             <p className="text-sm text-gray-600">
-              Anyone who is signed in can rate and review. You can change your review later. People who bought this product get a Verified purchase mark.
+              You are reviewing a product that was delivered to you. You can change your review later, and it carries a Verified purchase mark.
             </p>
             <fieldset>
               <legend className="text-sm font-medium text-gray-900">

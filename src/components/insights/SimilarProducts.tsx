@@ -6,6 +6,7 @@ import { getListingImageUrl, getListingImageAlt } from "@/features/catalogue/med
 import { recHeaders } from "@/features/recommendations/track";
 import { useAuth } from "@/features/identity/AuthProvider";
 import type { Rec } from "./PickCard";
+import { PriceTag } from "@/features/pricing/PriceTag";
 
 /** "Similar products / Customers also viewed" for a product page. Renders nothing when there is nothing to show. */
 export function SimilarProducts({ listingId }: { listingId: string }) {
@@ -53,9 +54,7 @@ export function SimilarProducts({ listingId }: { listingId: string }) {
                 )}
                 <div className="p-3">
                   <p className="line-clamp-2 text-sm font-medium text-gray-900 dark:text-zinc-100">{l.title}</p>
-                  <p className="mt-1 text-sm font-semibold text-teal-800 dark:text-teal-300">
-                    {l.currency === "INR" ? `₹ ${l.price}` : `${l.currency} ${l.price}`}
-                  </p>
+                  <PriceTag size="sm" price={l.price} currency={l.currency} strikePrice={l.pricing?.strikePrice} percentOff={l.pricing?.percentOff} saleEndsAt={l.pricing?.saleEndsAt} showEnd={false} />
                   {l.reason && <p className="mt-1 text-xs text-gray-600 dark:text-zinc-400">{l.reason}</p>}
                 </div>
               </Link>

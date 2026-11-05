@@ -1,5 +1,6 @@
 "use client";
 
+import { normaliseIndianPhone } from "@/features/delivery/phone";
 import { useEffect, useState } from "react";
 import { Copy } from "@/features/copy/Copy";
 import Link from "next/link";
@@ -58,6 +59,10 @@ export default function DeliveryApplyPage() {
 
   async function submit(action: "save_draft" | "submit") {
     setMessage(null);
+    if (action === "submit" && !normaliseIndianPhone(phone)) {
+      setMessage({ type: "error", text: "Please enter a valid 10-digit Indian mobile number, for example 98765 43210." });
+      return;
+    }
     setSubmitting(true);
     const res = await apiCall<{ application?: Application }>(getIdToken, "/api/delivery/application", {
       method: "POST",
@@ -139,9 +144,9 @@ export default function DeliveryApplyPage() {
               <Input id={id} required value={fullName} onChange={(e) => setFullName(e.target.value)} aria-describedby={describedBy} autoComplete="name" />
             )}
           </FormField>
-          <FormField label="Phone number" required hint="Used only to contact you about deliveries">
+          <FormField label="Phone number" required hint="A 10-digit Indian mobile number. While you are delivering an order, the customer can see your name and this number to call you, and not after.">
             {({ id, describedBy }) => (
-              <Input id={id} required inputMode="tel" value={phone} onChange={(e) => setPhone(e.target.value)} aria-describedby={describedBy} autoComplete="tel" placeholder="+91 98765 43210" />
+              <Input id={id} required inputMode="tel" type="tel" maxLength={16} value={phone} onChange={(e) => setPhone(e.target.value)} aria-describedby={describedBy} autoComplete="tel" placeholder="+91 98765 43210" />
             )}
           </FormField>
           <FormField label="City you will deliver in" required>

@@ -14,6 +14,8 @@ import {
   Spinner,
 } from "@/components/ui";
 import { PRODUCT_TYPES, PRODUCT_TYPE_LABELS } from "@/features/catalogue/types";
+import { PricingPolicyFields, emptyPricingPolicy, bodyFromState, stateFromListing, type PricingPolicyState } from "@/features/pricing/PricingPolicyFields";
+import { computeEffectivePrice } from "@/features/pricing/effectivePrice";
 
 type Listing = {
   id: string;
@@ -23,6 +25,15 @@ type Listing = {
   price: string;
   currency: string;
   stock: number | null;
+  mrp?: string | null;
+  saleEnabled?: boolean | null;
+  salePrice?: string | null;
+  saleStartsAt?: string | null;
+  saleEndsAt?: string | null;
+  returnDays?: number | null;
+  warrantyMonths?: number | null;
+  guaranteeText?: string | null;
+  replacementPolicy?: string | null;
 };
 
 export default function SellerListingsPage() {
@@ -40,6 +51,11 @@ export default function SellerListingsPage() {
   const [productType, setProductType] = useState<string>("PHYSICAL");
   const [price, setPrice] = useState("");
   const [stock, setStock] = useState("0");
+  const [pp, setPp] = useState<PricingPolicyState>(emptyPricingPolicy());
+  const [editing, setEditing] = useState<string | null>(null);
+  const [editPp, setEditPp] = useState<PricingPolicyState>(emptyPricingPolicy());
+  const [editPrice, setEditPrice] = useState("");
+  const [saving, setSaving] = useState(false);
 
   const isSeller =
     appUser?.roles.includes("SELLER") || appUser?.roles.includes("ADMIN");
@@ -92,6 +108,7 @@ export default function SellerListingsPage() {
         price,
         currency: "INR",
         submit,
+        ...bodyFromState(pp),
       };
       if (productType === "PHYSICAL") {
         body.stock = Number(stock) || 0;
@@ -115,11 +132,46 @@ export default function SellerListingsPage() {
       setDescription("");
       setPrice("");
       setStock("0");
+      setPp(emptyPricingPolicy());
       await load();
     } catch {
       setError("Network error");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  function startEdit(l: Listing) {
+    setEditing(l.id);
+    setEditPp(stateFromListing(l));
+    setEditPrice(l.price);
+    setError(null);
+    setMessage(null);
+  }
+
+  async function saveEdit(id: string) {
+    setSaving(true);
+    setError(null);
+    setMessage(null);
+    const token = await getIdToken();
+    try {
+      const res = await fetch(`/api/seller/listings/${id}`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ price: editPrice, ...bodyFromState(editPp) }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data.error ?? "Could not save the changes.");
+        return;
+      }
+      setMessage("Pricing and policy saved. Changes to the price of an approved product may need a quick review first.");
+      setEditing(null);
+      await load();
+    } catch {
+      setError("Network error");
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -156,9 +208,12 @@ export default function SellerListingsPage() {
           <h1 className="text-2xl font-bold text-gray-900">My Listings</h1>
           <p className="text-sm text-gray-500">Create and manage your products</p>
         </div>
-        <Button size="sm" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? "Cancel" : "New listing"}
-        </Button>
+        <div className="flex gap-2">
+          <Link href="/seller/inbox"><Button size="sm" variant="outline">Inbox</Button></Link>
+          <Button size="sm" onClick={() => setShowForm((v) => !v)}>
+            {showForm ? "Cancel" : "New listing"}
+          </Button>
+        </div>
       </div>
 
       {message && (
@@ -239,6 +294,8 @@ export default function SellerListingsPage() {
             </FormField>
           )}
 
+          <PricingPolicyFields value={pp} onChange={setPp} price={price} />
+
           <FormField label="Description">
             {({ id }) => (
               <Textarea
@@ -271,35 +328,51 @@ export default function SellerListingsPage() {
         {listings.length === 0 && (
           <p className="text-sm text-gray-500"><Copy id="seller.listings.empty" /></p>
         )}
-        {listings.map((l) => (
-          <li
-            key={l.id}
-            className="flex items-center justify-between gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm"
-          >
-            <div>
-              <p className="font-medium text-gray-900">{l.title}</p>
-              <p className="text-sm text-gray-500">
-                {PRODUCT_TYPE_LABELS[l.productType as keyof typeof PRODUCT_TYPE_LABELS] ??
-                  l.productType}{" "}
-                · {l.currency} {l.price}
-                {l.stock !== null && ` · Stock ${l.stock}`}
-              </p>
-            </div>
-            <Badge
-              variant={
-                l.status === "APPROVED"
-                  ? "success"
-                  : l.status === "REJECTED" || l.status === "SUSPENDED"
-                    ? "error"
-                    : l.status === "SUBMITTED" || l.status === "UNDER_REVIEW"
-                      ? "warning"
-                      : "default"
-              }
-            >
-              {l.status}
-            </Badge>
-          </li>
-        ))}
+        {listings.map((l) => {
+          const eff = computeEffectivePrice(l);
+          return (
+            <li key={l.id} className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-medium text-gray-900">{l.title}</p>
+                  <p className="text-sm text-gray-500">
+                    {PRODUCT_TYPE_LABELS[l.productType as keyof typeof PRODUCT_TYPE_LABELS] ?? l.productType} · {l.currency} {eff.unitPrice}
+                    {eff.strikePrice && eff.percentOff > 0 && ` (${eff.percentOff}% off, was ${eff.strikePrice})`}
+                    {eff.onSale ? " · Sale is on now" : eff.saleUpcoming ? " · Sale starts later" : ""}
+                    {l.stock !== null && ` · Stock ${l.stock}`}
+                  </p>
+                </div>
+                <Badge
+                  variant={
+                    l.status === "APPROVED"
+                      ? "success"
+                      : l.status === "REJECTED" || l.status === "SUSPENDED"
+                        ? "error"
+                        : l.status === "SUBMITTED" || l.status === "UNDER_REVIEW"
+                          ? "warning"
+                          : "default"
+                  }
+                >
+                  {l.status}
+                </Badge>
+              </div>
+              <div className="mt-3">
+                <Button size="sm" variant="outline" aria-expanded={editing === l.id} onClick={() => (editing === l.id ? setEditing(null) : startEdit(l))}>
+                  {editing === l.id ? "Close pricing and policy" : `Edit pricing and policy for ${l.title}`}
+                </Button>
+              </div>
+              {editing === l.id && (
+                <div className="mt-4 space-y-4">
+                  <FormField label="Selling price (INR)" required>
+                    {({ id }) => <Input id={id} type="number" min="0" step="0.01" value={editPrice} onChange={(e) => setEditPrice(e.target.value)} />}
+                  </FormField>
+                  <PricingPolicyFields value={editPp} onChange={setEditPp} price={editPrice} />
+                  <Button loading={saving} onClick={() => saveEdit(l.id)}>Save pricing and policy</Button>
+                </div>
+              )}
+            </li>
+          );
+        })}
       </ul>
 
       <p className="mt-10 text-center text-sm text-gray-500">

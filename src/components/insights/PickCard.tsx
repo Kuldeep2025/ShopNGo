@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { getListingImageUrl, getListingImageAlt } from "@/features/catalogue/media";
 import type { PublicListingDTO } from "@/features/catalogue";
+import { PriceTag } from "@/features/pricing/PriceTag";
 
 export type Rec = PublicListingDTO & { reason?: string; kind?: string; liked?: boolean };
 
@@ -37,9 +38,7 @@ export function PickCard({ rec: l, onDismiss, onToggleLike, className = "" }: Pr
         )}
         <div className="p-3">
           <p className="line-clamp-2 text-sm font-medium text-gray-900 dark:text-zinc-100">{l.title}</p>
-          <p className="mt-1 text-sm font-semibold text-teal-800 dark:text-teal-300">
-            {l.currency === "INR" ? `₹ ${l.price}` : `${l.currency} ${l.price}`}
-          </p>
+                  <PriceTag size="sm" price={l.price} currency={l.currency} strikePrice={l.pricing?.strikePrice} percentOff={l.pricing?.percentOff} saleEndsAt={l.pricing?.saleEndsAt} showEnd={false} />
           {l.reason && (
             <p className="mt-2 inline-block rounded-full bg-teal-50 px-2.5 py-1 text-xs text-teal-900 dark:bg-teal-950 dark:text-teal-200">
               {l.reason}
