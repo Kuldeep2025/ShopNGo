@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui";
+import { useAuth } from "@/features/identity/AuthProvider";
 import { PRODUCT_TYPE_LABELS, type PublicListingDTO } from "@/features/catalogue";
 import { getListingImageUrl, getListingImageAlt } from "@/features/catalogue/media";
 import { RotatingTagline } from "@/features/brand/RotatingTagline";
@@ -132,6 +133,8 @@ export function CinematicHome({
 }: {
   listings: PublicListingDTO[];
 }) {
+  const { firebaseUser, appUser } = useAuth();
+  const signedIn = Boolean(firebaseUser || appUser);
   const [ready, setReady] = useState(false);
   const [rows, setRows] = useState<LayoutRow[] | null>(null);
   const [signals, setSignals] = useState<SessionSignals | null>(null);
@@ -381,13 +384,13 @@ export function CinematicHome({
                         Search products
                       </Button>
                     </Link>
-                    <Link href="/auth/sign-in">
+                    <Link href={signedIn ? "/delivery/apply" : "/auth/sign-in"}>
                       <Button
                         size="lg"
                         variant="outline"
                         className="border-zinc-600 text-zinc-100 hover:bg-zinc-800"
                       >
-                        Create account
+                        {signedIn ? "Become a delivery partner" : "Create account"}
                       </Button>
                     </Link>
                   </div>

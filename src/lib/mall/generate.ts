@@ -74,6 +74,7 @@ export function generateMallCatalogue(): MallProduct[] {
   const storesByParent = new Map(MALL_PARENTS.map((p) => [p.id, p]));
   const names = new Set<string>();
   const out: MallProduct[] = [];
+  const nounOf: string[] = [];
   let n = 0;
 
   for (const spec of MALL_SUBCATEGORIES) {
@@ -111,6 +112,7 @@ export function generateMallCatalogue(): MallProduct[] {
             ? 1 + Math.floor(rng() * 5)
             : spec.stock[0] + Math.floor(rng() * (spec.stock[1] - spec.stock[0] + 1));
 
+      nounOf.push(pick1.noun);
       out.push({
         id: `mall-${seq}`,
         sku: `MALL-${seq}`,
@@ -134,5 +136,25 @@ export function generateMallCatalogue(): MallProduct[] {
       });
     }
   }
+  // The same model must not appear twice just in another colour or size:
+  // later copies move to a different product line, so every card is a distinct product.
+  const baseUsed = new Set<string>();
+  out.forEach((prod, idx) => {
+    const noun = nounOf[idx]!;
+    const base = (series: string) => `${prod.brand} ${series} ${noun}`.toLowerCase();
+    if (baseUsed.has(base(prod.series))) {
+      const oldSeries = prod.series;
+      const next = SERIES.find((sr) => !baseUsed.has(base(sr)) && !names.has(`${prod.brand} ${sr} ${noun} - ${prod.variant}`.toLowerCase()));
+      if (!next) throw new Error(`No free product line for ${prod.title}`);
+      prod.series = next;
+      prod.title = `${prod.brand} ${next} ${noun} - ${prod.variant}`;
+      prod.slug = slugify(prod.title);
+      prod.imagePath = `${MALL_IMAGE_DIR}/${prod.slug}.svg`;
+      prod.description = prod.description.split(`${prod.brand} ${oldSeries} ${noun}`).join(`${prod.brand} ${next} ${noun}`);
+      prod.imageAlt = prod.imageAlt.split(`${prod.brand} ${oldSeries} ${noun}`).join(`${prod.brand} ${next} ${noun}`);
+      names.add(prod.title.toLowerCase());
+    }
+    baseUsed.add(base(prod.series));
+  });
   return out;
 }

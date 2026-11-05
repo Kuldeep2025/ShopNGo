@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useAuth } from "@/features/identity/AuthProvider";
 import { Button } from "@/components/ui";
 
 type Props = {
@@ -12,6 +15,25 @@ export function SignInRequired({
   message = "Sign in to continue. Your cart, orders, and saved addresses stay with your account.",
   className = "",
 }: Props) {
+  const { firebaseUser, refreshAppUser } = useAuth();
+  if (firebaseUser) {
+    // Signed in, but the account details have not loaded yet: offer a retry, never "Sign in".
+    return (
+      <div className={`mx-auto max-w-md px-4 py-16 text-center sm:px-6 ${className}`} role="status">
+        <h1 className="text-xl font-bold text-gray-900 dark:text-zinc-100 sm:text-2xl">
+          You are signed in
+        </h1>
+        <p className="mt-2 text-sm leading-relaxed text-gray-600 dark:text-zinc-400 sm:text-base">
+          We could not load your account details just now. The server may be waking up.
+        </p>
+        <div className="mt-8 flex justify-center">
+          <Button size="lg" onClick={() => refreshAppUser()}>
+            Try again
+          </Button>
+        </div>
+      </div>
+    );
+  }
   return (
     <div
       className={`mx-auto max-w-md px-4 py-16 text-center sm:px-6 ${className}`}

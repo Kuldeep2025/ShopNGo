@@ -17,16 +17,16 @@ const navLinks = [
 
 export function Header() {
   const [open, setOpen] = useState(false);
-  const { appUser, loading, signOut } = useAuth();
+  const { appUser, firebaseUser, loading, signOut } = useAuth();
   const { theme, toggle } = useTheme();
   const isSeller = appUser?.roles.includes("SELLER");
   const isDriver = appUser?.roles.includes("DELIVERY_PARTNER");
   const isModerator =
     appUser?.roles.includes("MODERATOR") || appUser?.roles.includes("ADMIN");
 
-  const greeting = appUser
-    ? `Hi, ${(appUser.displayName || appUser.email || "there").split(" ")[0]}`
-    : null;
+  const signedIn = Boolean(appUser || firebaseUser);
+  const who = appUser?.displayName || appUser?.email || firebaseUser?.displayName || firebaseUser?.email || "there";
+  const greeting = signedIn ? `Hi, ${who.split(" ")[0]}` : null;
 
   return (
     <header className="sticky top-0 z-40 border-b border-teal-900/10 bg-white/95 shadow-sm backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-950/90">
@@ -74,7 +74,7 @@ export function Header() {
               Store orders
             </Link>
           )}
-          {appUser && !isSeller && (
+          {signedIn && !isSeller && (
             <Link
               href="/seller/apply"
               className="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-teal-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
@@ -82,12 +82,20 @@ export function Header() {
               Sell
             </Link>
           )}
-          {appUser && (
+          {signedIn && (
             <Link
               href={isDriver ? "/delivery" : "/delivery/apply"}
               className="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-teal-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
             >
               {isDriver ? "Deliveries" : "Deliver"}
+            </Link>
+          )}
+          {isModerator && (
+            <Link
+              href="/moderator/activity"
+              className="rounded-lg px-3 py-2 text-sm font-medium text-gray-700 hover:bg-teal-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              Control centre
             </Link>
           )}
           {isModerator && (
@@ -137,7 +145,7 @@ export function Header() {
 
           {loading ? (
             <span className="text-sm text-gray-400">…</span>
-          ) : appUser ? (
+          ) : signedIn ? (
             <>
               <Link
                 href="/account"
@@ -204,7 +212,7 @@ export function Header() {
               {link.label}
             </Link>
           ))}
-          {appUser &&
+          {signedIn &&
             [
               { href: "/orders", label: "My orders" },
               { href: "/account", label: "My account" },
@@ -217,6 +225,7 @@ export function Header() {
               { href: isDriver ? "/delivery" : "/delivery/apply", label: isDriver ? "My deliveries" : "Become a delivery partner" },
               ...(isModerator
                 ? [
+                    { href: "/moderator/activity", label: "Control centre" },
                     { href: "/moderator/applications", label: "Review sellers" },
                     { href: "/moderator/listings", label: "Review listings" },
                     { href: "/insights", label: "Insights" },
@@ -243,7 +252,7 @@ export function Header() {
             {theme === "dark" ? "Light mode" : "Dark mode"}
           </button>
           <div className="mt-2 border-t border-gray-100 pt-3 dark:border-zinc-800">
-            {appUser ? (
+            {signedIn ? (
               <button
                 type="button"
                 className="w-full rounded-lg px-3 py-2.5 text-left text-sm font-medium text-gray-700 hover:bg-teal-50 dark:text-zinc-300"

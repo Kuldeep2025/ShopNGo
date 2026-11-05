@@ -21,12 +21,12 @@ export async function POST(req: NextRequest) {
     const user = await getSessionUser(req.headers.get("authorization"));
     const userLimit = rateLimit(
       `ai:user:${user?.id ?? "guest"}`,
-      Number(process.env.AI_USER_DAILY_REQUEST_LIMIT ?? 10),
+      Number(process.env.AI_USER_DAILY_REQUEST_LIMIT ?? 30),
       86_400_000
     );
     const globalLimit = rateLimit(
       "ai:global",
-      Number(process.env.AI_GLOBAL_DAILY_REQUEST_LIMIT ?? 40),
+      Number(process.env.AI_GLOBAL_DAILY_REQUEST_LIMIT ?? 500),
       86_400_000
     );
     if (!userLimit.allowed || !globalLimit.allowed) {
@@ -97,13 +97,13 @@ export async function POST(req: NextRequest) {
               ]);
             })(),
           },
-          include: { store: true },
-          take: 5,
+          include: { store: true, category: true },
+          take: 6,
         });
         for (const l of listings) {
           if (isPubliclyVisible(l)) {
             snippets.push(
-              `Title: ${l.title}\nType: ${l.productType}\nPrice: ${l.currency} ${l.price}\nStore: ${l.store.name}`
+              `Title: ${l.title}\nType: ${l.productType}\nCategory: ${l.category?.name ?? "N/A"}\nPrice: ${l.currency} ${l.price}\nStock: ${l.stock ?? "n/a"}\nDescription: ${(l.description ?? "N/A").slice(0, 300)}\nStore: ${l.store.name}`
             );
           }
         }

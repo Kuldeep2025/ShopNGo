@@ -15,7 +15,7 @@ type Props = {
 };
 
 export function AddToCartButton({ listingId, productTitle, size = "lg", outOfStock = false }: Props) {
-  const { appUser, loading, getIdToken } = useAuth();
+  const { appUser, firebaseUser, loading, getIdToken } = useAuth();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
 
@@ -55,7 +55,7 @@ export function AddToCartButton({ listingId, productTitle, size = "lg", outOfSto
     );
   }
 
-  if (!appUser) {
+  if (!appUser && !firebaseUser) {
     return (
       <div>
         <Link href="/auth/sign-in">

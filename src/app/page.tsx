@@ -1,3 +1,4 @@
+import { PickedForYou } from "@/components/insights/PickedForYou";
 import { CinematicHome } from "@/features/cinematic/CinematicHome";
 import { filterPublicListings, toPublicListingDTO, type PublicListingDTO } from "@/features/catalogue";
 import { DEMO_LISTINGS } from "@/lib/demo-data";
@@ -26,5 +27,10 @@ async function getListings(): Promise<PublicListingDTO[]> {
 
 export default async function HomePage() {
   const listings = await getListings();
-  return <CinematicHome listings={listings} />;
+  return (
+    <>
+      <CinematicHome listings={listings} />
+      <PickedForYou />
+    </>
+  );
 }

@@ -35,6 +35,29 @@ type AuthState = {
 
 const AuthContext = createContext<AuthState | null>(null);
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Loads the app user, retrying so a slow or sleeping server never looks like "signed out". */
+async function fetchAppUser(user: FirebaseUser): Promise<AppUser | null> {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    try {
+      const token = await user.getIdToken(attempt > 0);
+      const res = await fetch("/api/auth/session", {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) return data.user as AppUser;
+      }
+    } catch {
+      /* try again */
+    }
+    await sleep(1200 * (attempt + 1));
+  }
+  return null;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [appUser, setAppUser] = useState<AppUser | null>(null);
@@ -51,25 +74,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [firebaseUser]);
 
   const refreshAppUser = useCallback(async () => {
-    const token = await getIdToken();
-    if (!token) {
+    if (!firebaseUser) {
       setAppUser(null);
       return;
     }
-    try {
-      const res = await fetch("/api/auth/session", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) {
-        setAppUser(null);
-        return;
-      }
-      const data = await res.json();
-      setAppUser(data.user ?? null);
-    } catch {
-      setAppUser(null);
-    }
-  }, [getIdToken]);
+    setAppUser(await fetchAppUser(firebaseUser));
+  }, [firebaseUser]);
 
   useEffect(() => {
     if (!configured) {
@@ -79,20 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsub = subscribeToAuthChanges(async (user) => {
       setFirebaseUser(user);
       if (user) {
-        try {
-          const token = await user.getIdToken();
-          const res = await fetch("/api/auth/session", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (res.ok) {
-            const data = await res.json();
-            setAppUser(data.user ?? null);
-          } else {
-            setAppUser(null);
-          }
-        } catch {
-          setAppUser(null);
-        }
+        setAppUser(await fetchAppUser(user));
       } else {
         setAppUser(null);
       }

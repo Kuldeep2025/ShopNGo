@@ -32,14 +32,18 @@ export async function getSessionUser(
   if (!idToken) return null;
 
   const decoded = await verifyIdToken(idToken);
-  if (!decoded?.uid || !decoded.email) return null;
+  if (!decoded?.uid) return null;
+  // Phone sign-in has no email: use a stable placeholder so the account still works.
+  const userEmail =
+    decoded.email ??
+    `${(decoded.phone_number ?? decoded.uid).replace(/[^0-9a-zA-Z]/g, "")}@phone.shopngo.app`;
 
   if (!isDatabaseConfigured() || !prisma) {
     // Database not ready – return a minimal ephemeral session (dev only)
     return {
       id: "ephemeral",
       firebaseUid: decoded.uid,
-      email: decoded.email,
+      email: userEmail,
       displayName: decoded.name ?? null,
       roles: ["CUSTOMER"],
     };
@@ -51,19 +55,19 @@ export async function getSessionUser(
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
   const isBootstrapAdmin =
-    decoded.email_verified !== false && adminEmails.includes(decoded.email.toLowerCase());
+    Boolean(decoded.email) &&
+    decoded.email_verified !== false &&
+    adminEmails.includes(userEmail.toLowerCase());
 
   // Upsert internal user – idempotent
   const upserted = await prisma.user.upsert({
     where: { firebaseUid: decoded.uid },
     // Only the email is refreshed: name and photo are the member's own edits after sign-up.
-    update: {
-      email: decoded.email,
-    },
+    update: decoded.email ? { email: decoded.email } : {},
     create: {
       firebaseUid: decoded.uid,
-      email: decoded.email,
-      displayName: decoded.name ?? null,
+      email: userEmail,
+      displayName: decoded.name ?? decoded.phone_number ?? null,
       photoUrl: decoded.picture ?? null,
       roles: isBootstrapAdmin ? ["CUSTOMER", "ADMIN", "MODERATOR"] : ["CUSTOMER"],
     },

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FooterAuthLink } from "@/components/layout/FooterAuthLink";
 import { AnalyticsPreferencesButton } from "@/components/analytics/FirebaseAnalytics";
 
 export function Footer() {
@@ -65,9 +66,7 @@ export function Footer() {
             </p>
             <ul className="mt-3 space-y-2.5 text-sm text-gray-600 dark:text-zinc-400">
               <li>
-                <Link href="/auth/sign-in" className="hover:text-teal-700 dark:hover:text-teal-400">
-                  Sign in
-                </Link>
+                <FooterAuthLink />
               </li>
               <li>
                 <Link href="/account" className="hover:text-teal-700 dark:hover:text-teal-400">

@@ -1,5 +1,6 @@
 "use client";
 
+import { SignInRequired } from "@/components/feedback/SignInRequired";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/features/identity/AuthProvider";
@@ -101,20 +102,7 @@ export default function ModeratorApplicationsPage() {
     );
   }
 
-  if (!appUser) {
-    return (
-      <div className="mx-auto max-w-md px-6 py-16 text-center">
-        <Alert variant="info" title="Sign in required">
-          Moderator access requires a signed-in account with the MODERATOR role.
-        </Alert>
-        <div className="mt-6">
-          <Link href="/auth/sign-in">
-            <Button>Sign in</Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  if (!appUser) return <SignInRequired title="Sign in required" message="Moderator access requires a signed-in account with the MODERATOR role." />;
 
   if (!isModerator) {
     return (

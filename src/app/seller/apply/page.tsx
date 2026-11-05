@@ -1,5 +1,6 @@
 "use client";
 
+import { SignInRequired } from "@/components/feedback/SignInRequired";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/features/identity/AuthProvider";
@@ -95,20 +96,7 @@ export default function SellerApplyPage() {
     );
   }
 
-  if (!appUser) {
-    return (
-      <div className="mx-auto max-w-md px-6 py-16 text-center">
-        <Alert variant="info" title="Sign in required">
-          You need an account to apply as a seller.
-        </Alert>
-        <div className="mt-6">
-          <Link href="/auth/sign-in">
-            <Button>Sign in</Button>
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  if (!appUser) return <SignInRequired title="Sign in required" message="You need an account to apply as a seller." />;
 
   const status = application?.status ?? "NONE";
   const canEdit = status === "NONE" || status === "DRAFT" || status === "REJECTED";
