@@ -10,6 +10,8 @@ import { AddToCartButton } from "@/components/cart/AddToCartButton";
 import { PriceComparison } from "@/components/compare/PriceComparison";
 import { ProductReviews } from "@/components/reviews/ProductReviews";
 import { FrequentlyBoughtTogether } from "@/components/insights/FrequentlyBoughtTogether";
+import { SimilarProducts } from "@/components/insights/SimilarProducts";
+import { ProductViewTracker } from "@/components/insights/ProductViewTracker";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -181,6 +183,8 @@ export default async function ProductPage({ params }: Props) {
 
       <FrequentlyBoughtTogether slug={listing.slug} />
 
+      <SimilarProducts listingId={listing.id} />
+      <ProductViewTracker listingId={listing.id} />
     </div>
   );
 }
