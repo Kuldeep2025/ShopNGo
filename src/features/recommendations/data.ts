@@ -186,6 +186,7 @@ export async function loadSignals(actor: Actor): Promise<Signals> {
       weight: i.type === "VIEW" ? i.weight : undefined,
     });
     if (i.productRef) productIds.add(i.productRef);
+    if (i.productRef && (i.type === "CART" || i.type === "LIKE")) cartIds.add(i.productRef);
   }
   for (const o of orders) {
     signals.push({ kind: "PURCHASE", at: o.order.createdAt.getTime(), productId: o.listingId });
@@ -284,6 +285,7 @@ export async function personalFeed(actor: Actor, category?: string): Promise<Ran
     limit: 60,
     now,
     exclude: sig.cartIds,
+    maxPerCategoryInWindow: 4,
     cooc: g.cooc,
     seed: new Date(now).toISOString().slice(0, 10),
   });

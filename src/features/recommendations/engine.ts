@@ -558,7 +558,7 @@ function reasonFor(s: Scored, profile: Profile, itemsById: Map<string, Item>, ex
     if (best?.query) return `Matches your search for “${best.query}”`;
     return `Similar to things you have looked at`;
   }
-  if (profile.price && s.price >= 0.9 && s.content > 0.05) {
+  if (profile.price && s.price >= 0.9 && (s.catSim > 0.1 || s.cos > 0.1)) {
     return `Matches your usual price range (${inr(profile.price.low)} to ${inr(profile.price.high)})`;
   }
   if ((item.trend ?? 0) >= 0.4) return "Trending now";
