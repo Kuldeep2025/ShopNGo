@@ -45,3 +45,17 @@ export const THEME_META: Record<ThemeId, { bg: string; fg: string; accent: strin
   ocean: { bg: "#f0f9ff", fg: "#082f49", accent: "#0369a1" },
   forest: { bg: "#f7faf5", fg: "#1a2e05", accent: "#3f6212" },
 };
+
+
+/** What the visitor chose. "system" follows the device setting. */
+export type ThemePref = ThemeId | "system";
+
+export function isThemePref(v: unknown): v is ThemePref {
+  return v === "system" || isThemeId(v);
+}
+
+/** Turn a stored choice into a concrete theme. Unknown values fall back to System. */
+export function resolveTheme(pref: unknown, prefersDark: boolean): ThemeId {
+  if (isThemeId(pref)) return pref;
+  return prefersDark ? "dark" : "light";
+}

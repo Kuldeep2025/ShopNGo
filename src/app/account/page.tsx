@@ -5,6 +5,7 @@ import { Copy } from "@/features/copy/Copy";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/features/identity/AuthProvider";
+import { AvatarSettings } from "@/features/avatars/AvatarSettings";
 import {
   Button,
   FormField,
@@ -210,6 +211,8 @@ export default function AccountPage() {
           {error}
         </Alert>
       )}
+
+      <AvatarSettings />
 
       {/* Profile form */}
       <form

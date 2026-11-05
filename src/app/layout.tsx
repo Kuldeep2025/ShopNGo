@@ -8,7 +8,9 @@ import { SkipLink } from "@/components/a11y/SkipLink";
 import { OnboardingHint } from "@/components/feedback/OnboardingHint";
 import { FirebaseAnalytics } from "@/components/analytics/FirebaseAnalytics";
 import { PwaProvider } from "@/components/pwa/PwaProvider";
+import { AvatarProvider } from "@/features/avatars/AvatarProvider";
 import { AskShopNGo } from "@/components/ai/AskShopNGo";
+import { themeBootScript } from "@/features/theme/bootScript";
 import "./globals.css";
 
 const sans = DM_Sans({
@@ -73,11 +75,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript() }} />
+      </head>
       <body
         className={`${sans.variable} ${display.variable} flex min-h-screen flex-col bg-[var(--bg)] text-[var(--fg)] antialiased`}
       >
         <ThemeProvider>
           <AuthProvider>
+            <AvatarProvider>
             <SkipLink />
             <Header />
             <main id="main-content" tabIndex={-1} className="flex-1 focus:outline-none">
@@ -88,6 +94,7 @@ export default function RootLayout({
             <FirebaseAnalytics />
             <PwaProvider />
             <AskShopNGo />
+            </AvatarProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

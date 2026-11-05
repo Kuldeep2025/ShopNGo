@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { cn } from "@/lib/cn";
 import { useAuth } from "@/features/identity/AuthProvider";
-import { useTheme } from "@/features/theme/ThemeProvider";
-import { ThemeSwitcher } from "@/components/layout/ThemeSwitcher";
+import { ThemeSwitcher, ThemeRadioGroup } from "@/components/layout/ThemeSwitcher";
+import { UserAvatar } from "@/features/avatars/UserAvatar";
 import { Button } from "@/components/ui";
 import { RotatingLogo } from "@/features/brand/RotatingLogo";
 
@@ -20,7 +20,6 @@ const navLinks = [
 export function Header() {
   const [open, setOpen] = useState(false);
   const { appUser, firebaseUser, loading, signOut } = useAuth();
-  const { theme, toggle } = useTheme();
   const isSeller = appUser?.roles.includes("SELLER");
   const isDriver = appUser?.roles.includes("DELIVERY_PARTNER");
   const isModerator =
@@ -121,32 +120,16 @@ export function Header() {
 
         <div className="hidden items-center gap-2 md:flex">
           <ThemeSwitcher />
-          <button
-            type="button"
-            onClick={toggle}
-            className="rounded-lg p-2 text-gray-600 transition hover:bg-teal-50 hover:text-teal-800 dark:text-zinc-400 dark:hover:bg-zinc-800"
-            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-          >
-            {theme === "dark" ? (
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-              </svg>
-            ) : (
-              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-              </svg>
-            )}
-          </button>
-
           {loading ? (
             <span className="text-sm text-gray-400">…</span>
           ) : signedIn ? (
             <>
               <Link
                 href="/account"
-                className="max-w-[140px] truncate rounded-lg px-2 py-1.5 text-sm font-medium text-gray-700 hover:bg-teal-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
+                className="flex max-w-[180px] items-center gap-2 truncate rounded-lg px-2 py-1.5 text-sm font-medium text-gray-700 hover:bg-teal-50 dark:text-zinc-200 dark:hover:bg-zinc-800"
               >
-                {greeting}
+                <UserAvatar size={28} />
+                <span className="truncate">{greeting}</span>
               </Link>
               <Link href="/orders">
                 <Button variant="ghost" size="sm">
@@ -236,16 +219,9 @@ export function Header() {
                 {link.label}
               </Link>
             ))}
-          <button
-            type="button"
-            className="rounded-lg px-3 py-2.5 text-left text-sm font-medium text-gray-700 hover:bg-teal-50 dark:text-zinc-300 dark:hover:bg-zinc-800"
-            onClick={() => {
-              toggle();
-              setOpen(false);
-            }}
-          >
-            {theme === "dark" ? "Light mode" : "Dark mode"}
-          </button>
+          <div className="mt-2 border-t border-gray-100 px-1 pt-2 dark:border-zinc-800">
+            <ThemeRadioGroup name="theme-mobile" />
+          </div>
           <div className="mt-2 border-t border-gray-100 pt-3 dark:border-zinc-800">
             {signedIn ? (
               <button
