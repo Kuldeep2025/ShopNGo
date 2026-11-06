@@ -86,11 +86,18 @@ export async function retrieveEvidence(question: string, page?: string): Promise
       ...visible,
       ...(store ? { storeId: store.id } : {}),
       ...(budget !== null ? { price: { lte: budget } } : {}),
-      OR: terms.flatMap((t) => [
-        { title: { contains: t, mode: "insensitive" as const } },
-        { category: { name: { contains: t, mode: "insensitive" as const } } },
-        { category: { parent: { name: { contains: t, mode: "insensitive" as const } } } },
-      ]),
+      OR: terms.flatMap((t) => {
+        // Short terms ("bud", "tv", "iem") would match inside unrelated words ("Budget", "Premium")
+        // and crowd out the real products, so they must start a word.
+        const text = (field: "title" | "name") => (t.length >= 4
+          ? [{ [field]: { contains: t, mode: "insensitive" as const } }]
+          : [{ [field]: { startsWith: t, mode: "insensitive" as const } }, { [field]: { contains: ` ${t}`, mode: "insensitive" as const } }]);
+        return [
+          ...text("title"),
+          ...text("name").map((name) => ({ category: name })),
+          ...text("name").map((name) => ({ category: { parent: name } })),
+        ];
+      }),
     },
     select: {
       id: true, title: true, description: true, price: true, currency: true, stock: true,

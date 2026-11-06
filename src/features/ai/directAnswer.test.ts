@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { understand } from "./queryUnderstanding";
 import { detectLanguage, directAnswer, budgetFrom, canAnswerDirectly } from "./directAnswer";
 
 const ev = [
@@ -98,5 +99,16 @@ describe("directAnswer from live search evidence", () => {
   });
   it("leaves open questions to the model", () => {
     expect(canAnswerDirectly("suggest a good gift for my sister", [head("match"), ...earbuds])).toBe(false);
+  });
+});
+
+describe("query understanding", () => {
+  it("does not treat a stationery notebook as a laptop", () => {
+    expect(understand("cheapest laptop").concepts[0]!.terms).not.toContain("notebook");
+  });
+  it("finds earbuds from Roman Hindi and English questions", () => {
+    expect(understand("cheapest earbuds kaunsa hai").concepts.map((c) => c.word)).toEqual(["earbud"]);
+    expect(understand("earbuds kitne ka hai").wantsCheapest).toBe(false);
+    expect(understand("sabse sasta earphone").wantsCheapest).toBe(true);
   });
 });

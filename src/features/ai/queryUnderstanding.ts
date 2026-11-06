@@ -26,7 +26,7 @@ const STOP = new Set((
 export const CONCEPTS: string[][] = [
   ["earbud", "earphone", "headphone", "headset", "bud", "tws", "airpod", "airdope", "neckband", "iem", "earpod", "handsfree", "hansfree"],
   ["phone", "smartphone", "mobile", "iphone", "android", "handset", "cellphone", "fon", "foun"],
-  ["laptop", "notebook", "macbook", "chromebook", "computer", "pc"],
+  ["laptop", "macbook", "chromebook", "computer", "pc"],
   ["tv", "television", "led", "oled", "qled", "smarttv"],
   ["shoe", "sneaker", "footwear", "joota", "joote", "juta", "jute", "boot", "sandal", "slipper", "chappal", "chapal", "loafer", "flipflop"],
   ["shirt", "tshirt", "tee", "kurta"],
