@@ -5,7 +5,7 @@
 
 import { callAI } from "@/lib/providers/ai";
 import { getServerEnv } from "@/lib/env";
-import { directAnswer } from "./directAnswer";
+import { canAnswerDirectly, directAnswer } from "./directAnswer";
 import { SITE_KNOWLEDGE, liveSiteSnapshot } from "./siteContext";
 
 export const AI_SYSTEM_PROMPT = `You are the ShopNGo assistant. Answer only what the shopper asked, using only ShopNGo data.
@@ -52,6 +52,12 @@ export async function groundedAsk(question: string, contextSnippets: string[]): 
   const q = question.slice(0, 1000);
 
   if (process.env.AI_ENABLED === "false") {
+    return { answer: directAnswer(q, evidence), evidence, source: "fallback", provider: "none" };
+  }
+
+  // Clear cheapest / price / where-to-buy questions are answered straight from the live rows:
+  // short, exact, in the shopper's language, and independent of any model being available.
+  if (canAnswerDirectly(q, evidence)) {
     return { answer: directAnswer(q, evidence), evidence, source: "fallback", provider: "none" };
   }
 

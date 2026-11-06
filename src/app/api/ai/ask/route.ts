@@ -3,6 +3,7 @@ import { prisma, isDatabaseConfigured } from "@/lib/db";
 import { rateLimit } from "@/lib/security/rateLimit";
 import { groundedAsk } from "@/features/ai/ask";
 import { budgetFrom } from "@/features/ai/directAnswer";
+import { retrieveEvidence } from "@/features/ai/retrieval";
 import { buildExtraEvidence } from "@/features/ai/evidenceExtras";
 import { isPubliclyVisible } from "@/features/catalogue";
 import { searchDemoListings } from "@/lib/demo-data";
@@ -11,6 +12,8 @@ import { z } from "zod";
 const askSchema = z.object({
   question: z.string().min(3).max(1000),
   listingId: z.string().optional(),
+  /** Page the shopper is on (path only), so "this store" can be understood. */
+  page: z.string().max(200).optional(),
 });
 
 /**
@@ -36,9 +39,6 @@ export async function POST(req: NextRequest) {
 
     // Budget hint such as "under 1000 rupees" so gift or price questions get matching products.
     const budget = budgetFrom(parsed.data.question);
-    const wantsCheapest = /cheap|lowest|sasta|sasti|सस्ता/i.test(parsed.data.question);
-    // Roman Hindi and filler words that never name a product.
-    const STOP_EXTRA = ["mere", "paas", "hain", "kya", "milega", "milegi", "rupaye", "rupees", "who", "this", "that", "website", "built", "made", "kitna", "kitne", "kaun", "cheapest", "price", "show", "tell", "give", "can", "buy", "want", "need", "chahiye", "batao"];
 
     // Token-based demo matching: the raw question ("How much are the
     // wireless earbuds?") rarely substring-matches titles, so score by
@@ -78,45 +78,11 @@ export async function POST(req: NextRequest) {
           );
         }
       } else {
-        // Search top matching approved listings
-        const listings = await prisma.listing.findMany({
-          where: {
-            status: "APPROVED",
-            store: { isActive: true },
-            ...(budget !== null ? { price: { lte: budget } } : {}),
-            OR: (() => {
-              const stop = new Set(["the", "and", "for", "are", "how", "much", "what", "which", "with", "have", "you", "your", "does", "any", ...STOP_EXTRA]);
-              const words = parsed.data.question
-                .toLowerCase()
-                .split(/[^a-z0-9]+/)
-                .filter((t) => t.length >= 3 && !stop.has(t))
-                .slice(0, 6);
-              const terms = words.length ? words : [parsed.data.question.slice(0, 50)];
-              return terms.flatMap((w) => [
-                { title: { contains: w, mode: "insensitive" as const } },
-                { description: { contains: w, mode: "insensitive" as const } },
-              ]);
-            })(),
-          },
-          include: { store: true, category: true },
-          ...(wantsCheapest ? { orderBy: { price: "asc" as const } } : budget !== null ? { orderBy: { price: "desc" as const } } : {}),
-          take: 6,
-        });
-        let found = listings;
-        if (found.length === 0) {
-          found = await prisma.listing.findMany({
-            where: { status: "APPROVED", store: { isActive: true }, ...(budget !== null ? { price: { lte: budget } } : {}) },
-            include: { store: true, category: true },
-            orderBy: { createdAt: "desc" },
-            take: 8,
-          });
-        }
-        for (const l of found) {
-          if (isPubliclyVisible(l)) {
-            snippets.push(
-              `Title: ${l.title}\nType: ${l.productType}\nCategory: ${l.category?.name ?? "N/A"}\nPrice: ${l.currency} ${l.price}\nStock: ${l.stock ?? "n/a"}\nDescription: ${(l.description ?? "N/A").slice(0, 300)}\nStore: ${l.store.name}`
-            );
-          }
+        // Live scan of the database for this question: synonyms, categories, cheapest and budget handled there.
+        try {
+          snippets.push(...(await retrieveEvidence(parsed.data.question, parsed.data.page)));
+        } catch (e) {
+          console.error("ai retrieval error:", e instanceof Error ? e.message.slice(0, 200) : "unknown");
         }
       }
     } else {

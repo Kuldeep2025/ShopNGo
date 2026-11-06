@@ -7,7 +7,7 @@ import { TEAM } from "@/features/about/team";
 
 export type Lang = "en" | "hi" | "hinglish";
 
-const HINGLISH_WORDS = /\b(kya|hai|hain|hoga|mere|mera|meri|paas|kitna|kitne|kitni|kaun|kaise|kaisa|kisne|banaya|chahiye|milega|milegi|rupaye|rupay|sasta|sasti|dikhao|batao|bata|nahi|aur|ke|ki|ka|ko|se|mein|me|wala|wali|dukan)\b/i;
+const HINGLISH_WORDS = /\b(kya|hai|hain|hoga|mere|mera|meri|paas|kitna|kitne|kitni|kaun|kaise|kaisa|kisne|banaya|chahiye|milega|milegi|rupaye|rupay|sasta|sasti|dikhao|batao|bata|nahi|aur|ke|ki|ka|ko|se|mein|me|wala|wali|dukan|kaunsa|kaunsi|kaunse|konsa|konsi|konse|milta|milti|milte|sabse|mujhe|aapke|batana|bataiye|dikhana|acha|achha|accha|sastha|mehenga|mehnga|kitna|daam|dam|yahan|yaha|isme|iska|iski|inme|unme|bhai|yaar|hota|hoti|karta|karti|kar|liye|toh|bhi|mein|nahin)\b/i;
 
 export function detectLanguage(q: string): Lang {
   if (/[ऀ-ॿ]/.test(q)) return "hi";
@@ -35,6 +35,26 @@ const TXT = {
     en: (t: string, p: string, s: string) => `${t} is ${p}${s ? ` at ${s}` : ""}.`,
     hi: (t: string, p: string, s: string) => `${t} का दाम ${p} है${s ? `, ${s} पर` : ""}।`,
     hinglish: (t: string, p: string, s: string) => `${t} ka daam ${p} hai${s ? `, ${s} par` : ""}.`,
+  },
+  priciest: {
+    en: (t: string, p: string, s: string) => `The most expensive is ${t} at ${p}${s ? ` from ${s}` : ""}.`,
+    hi: (t: string, p: string, s: string) => `सबसे महंगा ${t} है, ${p}${s ? `, ${s} पर` : ""}।`,
+    hinglish: (t: string, p: string, s: string) => `Sabse mehenga ${t} hai, ${p}${s ? `, ${s} par` : ""}.`,
+  },
+  closest: {
+    en: (w: string, t: string, p: string, s: string) => `No "${w}" on ShopNGo. The closest is ${t} at ${p}${s ? ` from ${s}` : ""}.`,
+    hi: (w: string, t: string, p: string, s: string) => `ShopNGo पर "${w}" नहीं है। सबसे पास का ${t} है, ${p}${s ? `, ${s} पर` : ""}।`,
+    hinglish: (w: string, t: string, p: string, s: string) => `ShopNGo par "${w}" nahi hai. Sabse paas ka ${t} hai, ${p}${s ? `, ${s} par` : ""}.`,
+  },
+  where: {
+    en: (t: string, p: string, s: string) => `${t} is at ${s || "ShopNGo"}, ${p}.`,
+    hi: (t: string, p: string, s: string) => `${t} ${s || "ShopNGo"} पर मिलता है, ${p}।`,
+    hinglish: (t: string, p: string, s: string) => `${t} ${s || "ShopNGo"} par milta hai, ${p}.`,
+  },
+  storeSells: {
+    en: (n: string, items: string) => `${n} sells: ${items}.`,
+    hi: (n: string, items: string) => `${n} पर मिलता है: ${items}।`,
+    hinglish: (n: string, items: string) => `${n} par milta hai: ${items}.`,
   },
   few: {
     en: (items: string) => `Top matches: ${items}.`,
@@ -94,6 +114,51 @@ function parseItems(evidence: string[], q: string): Item[] {
   return out;
 }
 
+
+interface SearchInfo {
+  kind: "cheapest" | "priciest" | "match";
+  quality: string;
+  missing: string[];
+  items: { title: string; price: string; store: string }[];
+  storeLine?: { name: string; what: string };
+}
+
+/** Reads the "Search:" evidence block and the product blocks after it. Null when there was no search. */
+export function parseSearch(evidence: string[]): SearchInfo | null {
+  const head = evidence.find((e) => e.startsWith("Search:"));
+  const storeBlock = evidence.find((e) => e.startsWith("Store: ") && e.includes("What it sells"));
+  if (!head && !storeBlock) return null;
+  const get = (e: string, k: string) => e.split("\n").find((l) => l.startsWith(`${k}:`))?.slice(k.length + 1).trim();
+  const items = evidence
+    .filter((e) => e.startsWith("Title:") && e.includes("\nRank:") || (head && e.startsWith("Title:")))
+    .map((e) => ({ title: (get(e, "Title") ?? "").split(/\s[-–—]\s/)[0]!.slice(0, 80), price: get(e, "Price") ?? "", store: get(e, "Store") ?? "" }))
+    .filter((i) => i.title && i.price);
+  const missingLine = head ? head.split("\n").find((l) => l.startsWith("No product is called or categorised as:")) : undefined;
+  const missing = missingLine ? missingLine.slice(missingLine.indexOf(":") + 1).split(".")[0]!.split(",").map((x) => x.trim()).filter(Boolean) : [];
+  return {
+    kind: (get(head ?? "", "Kind") as SearchInfo["kind"]) || "match",
+    quality: get(head ?? "", "Match quality") ?? "none",
+    missing,
+    items,
+    storeLine: storeBlock ? { name: get(storeBlock, "Store") ?? "", what: get(storeBlock, "What it sells (category and count)") ?? "" } : undefined,
+  };
+}
+
+const WANTS_WHERE = /\bwhere\b|which (store|shop)|kahan|kahaan|kaha\b|konsi dukan|kaunsi dukan|कहाँ|कहां|कौन सी दुकान/;
+
+/**
+ * True when the live search evidence already holds a clear single answer (cheapest, most expensive,
+ * a price, or where to buy), so the reply can be built straight from the database rows in the
+ * shopper's own language, with no model in between.
+ */
+export function canAnswerDirectly(question: string, evidence: string[]): boolean {
+  const search = parseSearch(evidence);
+  if (!search || search.items.length === 0 || search.quality === "none") return false;
+  if (budgetFrom(question) !== null) return false;
+  if (search.kind === "cheapest" || search.kind === "priciest") return true;
+  return WANTS_WHERE.test(question.toLowerCase()) || /price|cost|kitna|kitne|kitni|daam|dam\b|kimat|keemat|rate|how much|दाम|कीमत|कितन/i.test(question);
+}
+
 export function budgetFrom(q: string): number | null {
   const l = q.toLowerCase();
   const m =
@@ -112,10 +177,30 @@ export function directAnswer(question: string, evidence: string[], live?: string
   }
   if (/(sell|seller|bechna|bechne|बेचन)/.test(q) && /(how|become|apply|kaise|start|banna|कैसे)/.test(q)) return TXT.seller[lang];
   if (/(deliver|delivery partner|rider)/.test(q) && /(how|become|apply|kaise|join|कैसे)/.test(q)) return TXT.delivery[lang];
-  if (/(which|what|kaun|konsi|kaunse|कौन).*(store|shop|dukan|stores)|\bstores?\b|दुकान/.test(q) && live) {
+  if (/(which|what|kaun|konsi|kaunse|कौन).*(store|shop|dukan|stores)|\bstores?\b|दुकान/.test(q) && live && !evidence.some((e) => e.startsWith("Search:"))) {
     const line = live.split("\n").find((l) => l.startsWith("Stores:"));
     const names = line?.slice(7).split(/\),\s*/).map((s) => s.replace(/\s*\(\d+\)\.?$/, "").trim()).filter(Boolean).slice(0, 5);
     if (names?.length) return TXT.stores[lang](names.join(", "));
+  }
+
+
+  // Live search evidence (written by the retrieval step for this very question) answers directly.
+  const search = parseSearch(evidence);
+  if (search) {
+    const first = search.items[0];
+    if (!first) {
+      if (search.storeLine) return TXT.storeSells[lang](search.storeLine.name, search.storeLine.what);
+      return TXT.notFound[lang];
+    }
+    const amount = price(first.price);
+    if (search.missing.length > 0) return TXT.closest[lang](search.missing[0]!, first.title, amount, first.store);
+    if (search.kind === "cheapest") return TXT.cheapest[lang](first.title, amount, first.store);
+    if (search.kind === "priciest") return TXT.priciest[lang](first.title, amount, first.store);
+    if (budgetFrom(question) === null && WANTS_WHERE.test(q)) return TXT.where[lang](first.title, amount, first.store);
+    if (budgetFrom(question) !== null || search.items.length > 1 && !/price|cost|kitna|kitne|daam|दाम|कीमत|how much/.test(q)) {
+      return TXT.few[lang](search.items.slice(0, 3).map((i) => `${i.title} ${price(i.price)}`).join(", "));
+    }
+    return TXT.one[lang](first.title, amount, first.store);
   }
 
   // Price comparison summaries name the exact item and its cheapest store: use the best matching one.
@@ -130,7 +215,7 @@ export function directAnswer(question: string, evidence: string[], live?: string
         line?.match(/^Summary: (.+?): only (.+?) sells it, at Rs ([\d,.]+)/);
       if (!m) continue;
       const last = m[1]!.toLowerCase().split(/[^a-z0-9]+/).filter(Boolean).pop() ?? "";
-      found.push({ name: m[1]!, store: m[2]!, amount: `Rs ${m[3]}`, hit: toks.includes(last) });
+      found.push({ name: m[1]!, store: m[2]!, amount: `Rs ${m[3]!.replace(/[.,]+$/, "")}`, hit: toks.includes(last) });
     }
     const pick = found.find((f) => f.hit) ?? found[0];
     if (pick) return (/cheap|lowest|sasta|sasti|सस्ता/.test(q) ? TXT.cheapest : TXT.one)[lang](pick.name, pick.amount, pick.store);
