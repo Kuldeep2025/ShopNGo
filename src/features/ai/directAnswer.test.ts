@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { understand } from "./queryUnderstanding";
+import { rank, understand } from "./queryUnderstanding";
 import { detectLanguage, directAnswer, budgetFrom, canAnswerDirectly } from "./directAnswer";
 
 const ev = [
@@ -103,6 +103,12 @@ describe("directAnswer from live search evidence", () => {
 });
 
 describe("query understanding", () => {
+  it("ranks the laptop above its backpack", () => {
+    const base = { id: "", description: null, category: "", parentCategory: "", store: "S", stock: 1 };
+    const u = understand("cheapest laptop");
+    const r = rank([{ ...base, id: "1", title: "Urban Laptop Backpack", price: 479 }, { ...base, id: "2", title: "Elite Convertible Laptop", price: 25399 }], u);
+    expect(r.picks[0]!.title).toBe("Elite Convertible Laptop");
+  });
   it("does not treat a stationery notebook as a laptop", () => {
     expect(understand("cheapest laptop").concepts[0]!.terms).not.toContain("notebook");
   });

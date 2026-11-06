@@ -169,7 +169,7 @@ export function has(hay: string, term: string): boolean {
   return re.test(hay);
 }
 
-const ACCESSORY = /(^|[^a-z0-9])(case|cases|cover|covers|holder|protector|guard|stand|strap|straps|cable|charger|adapter|mount|skin|pouch|sleeve|refill|spare|replacement|tips|cushion)($|[^a-z0-9])/;
+const ACCESSORY = /(^|[^a-z0-9])(case|cases|cover|covers|holder|protector|guard|stand|strap|straps|cable|charger|adapter|mount|skin|pouch|sleeve|refill|spare|replacement|tips|cushion|backpack|bagpack|bag|bags|sticker|stickers|riser|dock|pad|mat)($|[^a-z0-9])/;
 
 export function scoreCandidate(c: Candidate, concepts: Concept[]): Scored {
   const title = c.title.toLowerCase();
